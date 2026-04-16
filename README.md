@@ -49,6 +49,7 @@ Aplikasi ini dirancang untuk:
 ---
 
 ## 🖼️ Tampilan Aplikasi
+Terdapat beberapa game online yang terdapat pada play store sering dimainkan oleh kebanyakan orang, Dirancang khusus untuk efisiensi dan estetika.
 
 ### 📱 Halaman List Game
 Menampilkan daftar game dalam bentuk card dengan desain modern.
