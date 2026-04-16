@@ -10,7 +10,33 @@
 ---
 ## 🌟 Mengapa ListGame?
 Di era mobile gaming yang pesat, pengguna membutuhkan antarmuka yang bersih untuk mengeksplorasi pilihan mereka. ListGame hadir dengan filosofi desain yang mengutamakan kecepatan akses informasi dan estetika visual yang minimalis namun informatif.
-##📁 Struktur Proyek
+
+## 📁 Struktur Proyek
+ListGame App
+├── app
+│   └── src
+│       └── main
+│           ├── java/com/example/listgame
+│           │   ├── data
+│           │   │   └── DummyData.kt
+│           │   ├── model
+│           │   │   └── Game.kt
+│           │   ├── ui
+│           │   │   ├── screen
+│           │   │   │   ├── GameDetailScreen.kt
+│           │   │   │   └── GameListScreen.kt
+│           │   │   └── theme
+│           │   │       ├── Color.kt
+│           │   │       ├── Theme.kt
+│           │   │       └── Type.kt
+│           │   └── MainActivity.kt
+│           └── res
+│               ├── drawable
+│               ├── layout
+│               ├── values
+│               └── ... (resource files)
+└── build.gradle.kts
+
 ## ✨ Overview
 
 **ListGame** adalah aplikasi Android berbasis **Jetpack Compose** yang menampilkan daftar game populer seperti Mobile Legends, Free Fire, Genshin Impact, dan lainnya.
