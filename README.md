@@ -8,7 +8,9 @@
 > 📱 Aplikasi Android modern untuk menampilkan daftar game populer dengan tampilan menarik dan navigasi interaktif.
 
 ---
-
+## 🌟 Mengapa ListGame?
+Di era mobile gaming yang pesat, pengguna membutuhkan antarmuka yang bersih untuk mengeksplorasi pilihan mereka. ListGame hadir dengan filosofi desain yang mengutamakan kecepatan akses informasi dan estetika visual yang minimalis namun informatif.
+##📁 Struktur Proyek
 ## ✨ Overview
 
 **ListGame** adalah aplikasi Android berbasis **Jetpack Compose** yang menampilkan daftar game populer seperti Mobile Legends, Free Fire, Genshin Impact, dan lainnya.
