@@ -156,5 +156,6 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Mobile Application Prog
 
 ## Link Youtube
 
+https://youtube.com/shorts/VuOMfvkpf8g
 
 ---
