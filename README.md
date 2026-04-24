@@ -165,11 +165,17 @@ Informasi lengkap, banner, genre tags, rating, deskripsi, tombol kembali
 
 ## 🖼️ Tampilan Aplikasi
 Terdapat beberapa game online yang terdapat pada play store sering dimainkan oleh kebanyakan orang, Dirancang khusus untuk efisiensi dan estetika.
+### 📱 Halaman Utama Login
+Menampilkan tampilan login yang bisa diisi user.
 
+<img width="300" height="750" alt="image" src="https://github.com/user-attachments/assets/02c8844c-213b-4e7b-a51c-4afe629e5f4d" />
+
+
+---
 ### 📱 Halaman List Game
 Menampilkan daftar game dalam bentuk card dengan desain modern.
 
-<img width="200" height="700" alt="Screenshot_20260416_132943" src="https://github.com/user-attachments/assets/60191082-9f6b-4210-b9e7-11f30784660c" />
+<img width="300" height="750" alt="Screenshot_20260416_132943" src="https://github.com/user-attachments/assets/60191082-9f6b-4210-b9e7-11f30784660c" />
 
 
 ---
@@ -177,7 +183,7 @@ Menampilkan daftar game dalam bentuk card dengan desain modern.
 ### 📄 Halaman Detail Game
 Menampilkan informasi lengkap dari game yang dipilih.
 
-<img width="200" height="700" alt="Screenshot_20260416_133208" src="https://github.com/user-attachments/assets/36ea5cb4-1eeb-45b5-a289-540b2375c537" />
+<img width="300" height="750" alt="Screenshot_20260416_133208" src="https://github.com/user-attachments/assets/36ea5cb4-1eeb-45b5-a289-540b2375c537" />
 
 
 ---
