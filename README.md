@@ -264,8 +264,8 @@ Klik ▶ Run 'app'  (atau Shift + F10)
 
 ---
 
-## Kelompok 3 Tugas Praktikum Pengembangan Aplikasi Bergerak — Universitas Sebelas Maret 2026
-Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Mobile Application Programming (PAB)**. 
+## Kelompok 3 Tugas Praktikum Pengembangan Aplikasi Bergerak 
+Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Pengembangan Aplikasi Bergerak (PAB)**. 
 
 TIM PENGEMBANG 🦸🏻‍♂️🦸🏻‍♂️🦸🏻‍♂️
 1. Hanief Fahrel Wilianto (L0324016)
