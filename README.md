@@ -1,6 +1,6 @@
 # 🎮 ListGame App
 
-![Kotlin](https://img.shields.io/badge/Kotlin-Programming-blue?logo=kotlin)
+![Kotlin](https://img.shields.io/badge/Kotlin-Programming-blue?logo=kotlin) 
 ![Android Studio](https://img.shields.io/badge/IDE-Android%20Studio-green?logo=androidstudio)
 ![Platform](https://img.shields.io/badge/Platform-Android-brightgreen?logo=android)
 ![License](https://img.shields.io/badge/license-Free-blue)
