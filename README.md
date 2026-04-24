@@ -181,6 +181,21 @@ Menampilkan informasi lengkap dari game yang dipilih.
 
 
 ---
+
+## 📁 Data: 7 Game Populer
+
+Data dikurasi dalam `DummyData.kt` sebagai Kotlin `object` singleton, siap diperluas ke sumber data eksternal.
+
+| # | Judul & Developer | Genre | Rating |
+| :---: | :--- | :--- | :---: |
+| 1 | **Mobile Legends: Bang Bang**<br>Moonton | MOBA | ⭐ 4.6 |
+| 2 | **Free Fire**<br>Garena | Battle Royale | ⭐ 4.3 |
+| 3 | **Genshin Impact**<br>HoYoverse | Action RPG | ⭐ 4.7 |
+| 4 | **PUBG Mobile**<br>Level Infinite | Tactical Shooter | ⭐ 4.4 |
+| 5 | **Roblox**<br>Roblox Corporation | Sandbox | ⭐ 4.4 |
+| 6 | **Call of Duty: Mobile**<br>Activision | FPS | ⭐ 4.5 |
+| 7 | **Among Us**<br>Innersloth | Deduksi Sosial | ⭐ 4.2 |
+
 ## 🏗️ Arsitektur & Teknologi
 
 | Komponen | Teknologi |
