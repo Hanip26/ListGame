@@ -144,9 +144,12 @@ Sapaan personal, search bar, toggle wishlist, LazyColumn 7 game
 3. 📄 Game Detail
 Informasi lengkap, banner, genre tags, rating, deskripsi, tombol kembali
 4. Route (Sealed Class)
-├── Route.Login                  → LoginScreen()
-├── Route.Home(username: String) → GameListScreen(username)
-└── Route.Detail(gameId: Int)    → GameDetailScreen(gameId)
+
+| Objek Route | Parameter | Target Screen |
+| :--- | :--- | :--- |
+| Route.Login | *(Tidak ada)* | LoginScreen() |
+| Route.Home | username: String | GameListScreen(username) |
+| Route.Detail | gameId: Int | GameDetailScreen(gameId) |
 
 ## 🖼️ Tampilan Aplikasi
 Terdapat beberapa game online yang terdapat pada play store sering dimainkan oleh kebanyakan orang, Dirancang khusus untuk efisiensi dan estetika.
