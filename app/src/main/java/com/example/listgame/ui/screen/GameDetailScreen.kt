@@ -24,14 +24,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.listgame.data.DummyData
+import com.example.listgame.navigation.LocalBackStack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameDetailScreen(
     gameId: Int,
-    navigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backStack = LocalBackStack.current
     val game = DummyData.popularGames.find { it.id == gameId }
 
     Scaffold(
@@ -39,7 +40,7 @@ fun GameDetailScreen(
             TopAppBar(
                 title = { Text(text = "Detail Game", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = navigateBack) {
+                    IconButton(onClick = { backStack.removeLastOrNull() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Kembali"
