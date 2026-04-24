@@ -142,17 +142,11 @@ Login Screen → Game List → Game Detail
 flowchart TD
     Start([Buka Aplikasi]) --> Login
     
-  Login[<b>Login Screen</b><br/>Input username, validasi tidak boleh kosong]
+    Login -- "backStack.add(Route.Home(username))" --> List
     
-  Login -- "backStack.add(Route.Home(username))" --> List
+    List -- "backStack.add(Route.Detail(gameId))" --> Detail
     
-  List[<b>Game List Screen</b><br/>• Sapaan personal 'Hallo {nama}'<br/>• Search bar real-time<br/>• Toggle mode Wishlist ❤️<br/>• LazyColumn 7 game populer]
-    
-  List -- "backStack.add(Route.Detail(gameId))" --> Detail
-    
-  Detail[<b>Game Detail Screen</b><br/>• Banner, judul, developer<br/>• Genre tags LazyRow<br/>• Rating, ukuran file<br/>• Deskripsi & informasi update]
-    
-  Detail -- "[←] backStack.removeLastOrNull()" --> List
+    Detail -- "[←] backStack.removeLastOrNull()" --> List
 
   
 1. 🔐 Login Screen
