@@ -156,7 +156,7 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Mobile Application Prog
 
 ## Link Youtube
 
-https://youtube.com/shorts/VuOMfvkpf8g (Pertemuan 4)
-https://youtube.com/shorts/KDzaNaEwlFA (Pertemuan 5)
+1. https://youtube.com/shorts/VuOMfvkpf8g (Pertemuan 4)
+2. https://youtube.com/shorts/KDzaNaEwlFA (Pertemuan 5)
 
 ---
