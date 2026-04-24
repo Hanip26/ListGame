@@ -1,4 +1,4 @@
-#🎮 ListGame — Popular Games Explorer
+# 🎮 ListGame — Popular Games Explorer
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the-badge&logo=android&logoColor=white"/>
   <img src="https://img.shields.io/badge/Language-Kotlin-blueviolet?style=for-the-badge&logo=kotlin&logoColor=white"/>
@@ -11,10 +11,25 @@
   Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer, dilengkapi fitur login personal, pencarian real-time, halaman detail game, dan penanda favorit (wishlist).
 </p>
 
-##📱 Tentang Aplikasi
-ListGame adalah aplikasi mobile yang dikembangkan menggunakan Android Native (Kotlin) dengan UI framework Jetpack Compose sebagai tugas mata kuliah Pengembangan Aplikasi Bergerak. Aplikasi ini memungkinkan pengguna untuk login dengan nama pengguna, menjelajahi koleksi 7 game populer, mencari game tertentu secara real-time, melihat detail lengkap setiap game, serta menandai game favorit ke dalam daftar wishlist pribadi.
+# 📱Tentang Aplikasi
+ListGame adalah aplikasi Android Native yang dikembangkan sebagai bagian dari praktikum
+Pengembangan Aplikasi Bergerak (PAB).
+Aplikasi ini memungkinkan pengguna untuk:
+1. Login menggunakan nama
+2. Menjelajahi daftar 7 game populer
+3. Melakukan pencarian instan
+4. Melihat detail game secara lengkap
+5. Menyimpan game favorit ke wishlist pribadi
 
-## 📁 Struktur Proyek
+# ✨ Highlights
+🔐 Login dengan username (personalized greeting)
+🔍 Pencarian game secara real-time
+❤️ Wishlist / favorit system
+📄 Detail game lengkap (rating, genre, deskripsi)
+⚡ UI modern berbasis Jetpack Compose
+🧭 Custom navigation (tanpa Navigation Component)
+
+# 📁 Struktur Proyek
 <pre>ListGame App
 ├── app
 │   └── src
