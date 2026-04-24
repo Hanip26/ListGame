@@ -24,13 +24,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.listgame.data.DummyData
 import com.example.listgame.model.Game
+import com.example.listgame.navigation.LocalBackStack
+import com.example.listgame.navigation.Route
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameListScreen(
-    modifier: Modifier = Modifier,
-    navigateToDetail: (Int) -> Unit
+    username: String, // Menangkap parameter username
+    modifier: Modifier = Modifier
 ) {
+    val backStack = LocalBackStack.current
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isWishlistMode by rememberSaveable { mutableStateOf(false) }
     var favoriteGames by rememberSaveable { mutableStateOf(listOf<Int>()) }
@@ -67,6 +71,18 @@ fun GameListScreen(
         }
     ) { innerPadding ->
         Column(modifier = modifier.fillMaxSize().padding(innerPadding)) {
+
+            Text(
+                text = "Hallo $username, lagi mau cari game apa nih?",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+            )
+
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -106,7 +122,9 @@ fun GameListScreen(
                             onFavoriteClick = {
                                 favoriteGames = if (isFavorite) favoriteGames - game.id else favoriteGames + game.id
                             },
-                            modifier = Modifier.clickable { navigateToDetail(game.id) }
+                            modifier = Modifier.clickable {
+                                backStack.add(Route.Detail(game.id))
+                            }
                         )
                     }
                 }
