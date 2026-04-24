@@ -11,7 +11,7 @@
   Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer, dilengkapi fitur login personal, pencarian real-time, halaman detail game, dan penanda favorit (wishlist).
 </p>
 
-# 📱Tentang Aplikasi
+## 📱Tentang Aplikasi
 ListGame adalah aplikasi Android Native yang dikembangkan sebagai bagian dari praktikum
 Pengembangan Aplikasi Bergerak (PAB).
 Aplikasi ini memungkinkan pengguna untuk:
@@ -21,15 +21,22 @@ Aplikasi ini memungkinkan pengguna untuk:
 4. Melihat detail game secara lengkap
 5. Menyimpan game favorit ke wishlist pribadi
 
-# ✨ Highlights
-🔐 Login dengan username (personalized greeting)
-🔍 Pencarian game secara real-time
-❤️ Wishlist / favorit system
-📄 Detail game lengkap (rating, genre, deskripsi)
-⚡ UI modern berbasis Jetpack Compose
-🧭 Custom navigation (tanpa Navigation Component)
+## 🚀 Tech Stack
+1. 🟣 Kotlin (100%)
+2. ⚡ Jetpack Compose
+3. 🤖 Android Native
+4. 🎨 Material 3
+5. ✅ Completed Project
 
-# 📁 Struktur Proyek
+## ✨ Highlights
+1. 🔐 Login dengan username (personalized greeting)
+2. 🔍 Pencarian game secara real-time
+3. ❤️ Wishlist / favorit system
+4. 📄 Detail game lengkap (rating, genre, deskripsi)
+5. ⚡ UI modern berbasis Jetpack Compose
+6. 🧭 Custom navigation (tanpa Navigation Component)
+
+## 📁 Struktur Proyek
 <pre>ListGame App
 ├── app
 │   └── src
@@ -55,16 +62,30 @@ Aplikasi ini memungkinkan pengguna untuk:
 │               └── ... (resource files)
 └── build.gradle.kts
 </pre>
+
 ## ✨ Overview
+ListGame adalah aplikasi Android berbasis Jetpack Compose yang menampilkan daftar game populer seperti:
+1. Mobile Legends
+2. Free Fire
+3. Genshin Impact
+4. PUBG Mobile
+dan lainnya
 
-**ListGame** adalah aplikasi Android berbasis **Jetpack Compose** yang menampilkan daftar game populer seperti Mobile Legends, Free Fire, Genshin Impact, dan lainnya.
+Aplikasi ini bertujuan untuk:
+1. Menampilkan informasi game secara ringkas dan detail
+2. Mengimplementasikan UI modern berbasis Compose
+3. Melatih konsep navigasi dan state management
 
-Aplikasi ini dirancang untuk:
-- Menampilkan informasi game secara ringkas dan detail
-- Memberikan pengalaman UI modern berbasis Compose
-- Melatih konsep navigasi dan state management di Android
+## ✨ Fitur Utama
 
----
+| Ikon | Fitur | Deskripsi |
+| :---: | :--- | :--- |
+| 🔐 | **Login Screen** | Halaman awal interaktif dengan validasi input username, data akan dikirimkan ke halaman utama. |
+| 📋 | **Dynamic Game List** | Menampilkan daftar game populer dalam format *Card* modern dengan performa tinggi menggunakan `LazyColumn`. |
+| 🔍 | **Pencarian Real-Time** | Fitur pencarian instan (*live filter*) untuk mencari game berdasarkan nama, tanpa membedakan huruf besar/kecil. |
+| 📄 | **Detail Game Lengkap** | Menampilkan informasi komprehensif mulai dari *banner*, developer, genre tags (`LazyRow`), rating, hingga deskripsi. |
+| ❤️ | **Sistem Wishlist** | Ikon interaktif untuk menandai game sebagai favorit, memanfaatkan `rememberSaveable` agar state bertahan saat layar dirotasi. |
+| 🧭 | **Custom Navigation** | Sistem navigasi berbasis *back-stack* (`SnapshotStateList<Route>`) yang aman dan terintegrasi dengan tombol fisik *back* perangkat. |
 
 ## 🚀 Fitur Utama
 
