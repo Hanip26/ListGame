@@ -1,9 +1,15 @@
-# 🎮 ListGame App
-
-![Kotlin](https://img.shields.io/badge/Kotlin-Programming-blue?logo=kotlin) 
-![Android Studio](https://img.shields.io/badge/IDE-Android%20Studio-green?logo=androidstudio)
-![Platform](https://img.shields.io/badge/Platform-Android-brightgreen?logo=android)
-![License](https://img.shields.io/badge/license-Free-blue) 
+#🎮 ListGame — Popular Games Explorer
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the-badge&logo=android&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Language-Kotlin-blueviolet?style=for-the-badge&logo=kotlin&logoColor=white"/>
+  <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Min%20SDK-24%20(Android%207.0)-orange?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Target%20SDK-36-blue?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge"/>
+</p>
+<p align="center">
+  Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer, dilengkapi fitur login personal, pencarian real-time, halaman detail game, dan penanda favorit (wishlist).
+</p>
 
 > 📱 Aplikasi Android modern untuk menampilkan daftar game populer dengan tampilan menarik dan navigasi interaktif.
 
