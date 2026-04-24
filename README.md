@@ -134,6 +134,20 @@ Sistem penandaan game favorit yang terintegrasi di seluruh aplikasi:
 3. Toggle mode "Wishlist Saya" di TopAppBar untuk menyaring hanya game favorit
 4. Penambahan dan penghapusan dari wishlist bekerja secara instan tanpa reload
 
+## 🧭 Alur Navigasi
+Aplikasi menggunakan sistem navigasi custom back stack berbasis SnapshotStateList<Route> dengan arsitektur sebagai berikut:
+Login Screen → Game List → Game Detail
+1. 🔐 Login Screen
+Input username, validasi kosong, kirim data ke Home via Route.Home(username)
+2. 📋 Game List
+Sapaan personal, search bar, toggle wishlist, LazyColumn 7 game
+3. 📄 Game Detail
+Informasi lengkap, banner, genre tags, rating, deskripsi, tombol kembali
+4. Route (Sealed Class)
+├── Route.Login                  → LoginScreen()
+├── Route.Home(username: String) → GameListScreen(username)
+└── Route.Detail(gameId: Int)    → GameDetailScreen(gameId)
+
 ## 🖼️ Tampilan Aplikasi
 Terdapat beberapa game online yang terdapat pada play store sering dimainkan oleh kebanyakan orang, Dirancang khusus untuk efisiensi dan estetika.
 
@@ -152,8 +166,22 @@ Menampilkan informasi lengkap dari game yang dipilih.
 
 
 ---
+## 🏗️ Arsitektur & Teknologi
 
-## 🛠️ Arsitektur & Teknologi
+| Komponen | Teknologi |
+| :--- | :--- |
+| **Bahasa Pemrograman** | Kotlin |
+| **Platform** | Android Native |
+| **UI Framework** | Jetpack Compose (Material 3) |
+| **Navigasi** | Custom Back Stack (`SnapshotStateList<Route>`) |
+| **Daftar Item** | `LazyColumn` & `LazyRow` |
+| **State Management** | `remember`, `rememberSaveable`, `mutableStateOf` |
+| **Data Provider** | `DummyData` (Kotlin `object` singleton) |
+| **Model Data** | Kotlin `data class Game` |
+| **Min SDK** | 24 (Android 7.0 Nougat) |
+| **Target SDK** | 36 |
+
+### Penjelasan
 
 Aplikasi ini dibangun menggunakan standar Android modern:
 
