@@ -11,11 +11,8 @@
   Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer, dilengkapi fitur login personal, pencarian real-time, halaman detail game, dan penanda favorit (wishlist).
 </p>
 
-> 📱 Aplikasi Android modern untuk menampilkan daftar game populer dengan tampilan menarik dan navigasi interaktif.
-
----
-## 🌟 Mengapa ListGame?
-Di era mobile gaming yang pesat, pengguna membutuhkan antarmuka yang bersih untuk mengeksplorasi pilihan mereka. ListGame hadir dengan filosofi desain yang mengutamakan kecepatan akses informasi dan estetika visual yang minimalis namun informatif.
+##📱 Tentang Aplikasi
+ListGame adalah aplikasi mobile yang dikembangkan menggunakan Android Native (Kotlin) dengan UI framework Jetpack Compose sebagai tugas mata kuliah Pengembangan Aplikasi Bergerak. Aplikasi ini memungkinkan pengguna untuk login dengan nama pengguna, menjelajahi koleksi 7 game populer, mencari game tertentu secara real-time, melihat detail lengkap setiap game, serta menandai game favorit ke dalam daftar wishlist pribadi.
 
 ## 📁 Struktur Proyek
 <pre>ListGame App
