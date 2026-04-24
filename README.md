@@ -246,7 +246,7 @@ Aplikasi ini dibangun menggunakan standar Android modern:
 **Prasyarat:**
 * Android Studio Hedgehog | 2023.1.1 atau versi terbaru.
 * JDK 17+.
-* SDK Android API 24 (Nougat) ke atas.
+* SDK Android API 24+ (Nougat) ke atas.
 
 **Langkah-langkah:**
 1.  **Clone the Repo**:
@@ -254,16 +254,39 @@ Aplikasi ini dibangun menggunakan standar Android modern:
     git clone https://github.com/Hanip26/ListGame.git
     ```
 2.  **Import Project**: Buka Android Studio, pilih `Open` dan arahkan ke folder hasil clone.
-3.  **Sync Gradle**: Biarkan Android Studio mengunduh dependensi yang diperlukan.
-4.  **Run**: Jalankan di Emulator atau Device fisik melalui tombol `Shift + F10`.
+File → Open → Pilih folder ListGame → OK
+4.  **Sync Gradle**: Biarkan Android Studio mengunduh dependensi yang diperlukan.
+Tunggu proses sync otomatis, atau:
+   File → Sync Project with Gradle Files
+6.  **Run**: Jalankan di Emulator atau Device fisik melalui tombol `Shift + F10`.
+Klik ▶ Run 'app'  (atau Shift + F10)
+   Pilih perangkat / emulator yang tersedia
 
 ---
+## Dependecies
+// build.gradle.kts (app)
+dependencies {
+    // Jetpack Compose BOM
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
 
-## 🧭 Struktur Navigasi Proyek
+    // AndroidX Core
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
 
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation3:navigation3-ui:1.0.0-alpha04")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:1.0.0-alpha04")
+}
 
+## KELOMPOK 3 Tugas Praktikum Pengembangan Aplikasi Bergerak — Universitas Sebelas Maret 2026
 Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Mobile Application Programming (PAB)**. 
 
+TIM PENGEMBANG 🦸🏻‍♂️🦸🏻‍♂️🦸🏻‍♂️
 1. Hanief Fahrel Wilianto (L0324016)
 2. Muhammad Affan Nur Zhafariza (L0324022)
 3. Muhammad Rafii Setianto (L0324026)
@@ -276,3 +299,5 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Mobile Application Prog
 2. https://youtube.com/shorts/KDzaNaEwlFA (Pertemuan 5)
 
 ---
+Program Studi Informatika — Fakultas Teknologi Informasi dan Sains Data
+Universitas Sebelas Maret  ·  Mata Kuliah: Pengembangan Aplikasi Bergerak (Week 05)
