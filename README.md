@@ -21,14 +21,14 @@ Di era mobile gaming yang pesat, pengguna membutuhkan antarmuka yang bersih untu
 │           │   │   └── DummyData.kt
 │           │   ├── model
 │           │   │   └── Game.kt
+│           │   ├── navigation
+│           │   │   └── Routes.kt
 │           │   ├── ui
 │           │   │   ├── screen
 │           │   │   │   ├── GameDetailScreen.kt
-│           │   │   │   └── GameListScreen.kt
+│           │   │   │   ├── GameListScreen.kt
+│           │   │   │   └── LoginScreen.kt
 │           │   │   └── theme
-│           │   │       ├── Color.kt
-│           │   │       ├── Theme.kt
-│           │   │       └── Type.kt
 │           │   └── MainActivity.kt
 │           └── res
 │               ├── drawable
