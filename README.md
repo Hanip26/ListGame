@@ -87,33 +87,52 @@ Aplikasi ini bertujuan untuk:
 | ❤️ | **Sistem Wishlist** | Ikon interaktif untuk menandai game sebagai favorit, memanfaatkan `rememberSaveable` agar state bertahan saat layar dirotasi. |
 | 🧭 | **Custom Navigation** | Sistem navigasi berbasis *back-stack* (`SnapshotStateList<Route>`) yang aman dan terintegrasi dengan tombol fisik *back* perangkat. |
 
-## 🚀 Fitur Utama
+### Penjelasan
+1. 🔐 Login Screen — Titik Masuk Aplikasi
+Halaman pertama yang ditemui pengguna saat membuka aplikasi:
+a. Input field Nama Pengguna dengan validasi — tidak boleh kosong
+b. Pesan error otomatis muncul jika pengguna mencoba masuk tanpa mengisi nama
+c. Tombol "Masuk ke Daftar Game" yang membawa data username ke halaman berikutnya
+d. Mendemonstrasikan konsep Basic Routing dan Passing Parameter antarlayar
 
-1. **📋 Dynamic Game List**  
-   Menampilkan daftar game populer dalam bentuk card list lengkap dengan gambar, nama game, developer, dan deskripsi singkat.
+2. 📋 Game List Screen — Daftar Game Populer
+Halaman utama setelah login, menampilkan 7 game populer secara interaktif:
 
-2. **🔍 Search Bar (UI)**  
-   Tersedia kolom pencarian untuk mencari game (UI sudah tersedia dan siap dikembangkan lebih lanjut).
+a. Sapaan personal — menyambut pengguna dengan nama yang diinput saat login (contoh: "Hallo Kelompok 3, lagi mau cari game apa nih?")
+b. Daftar game menggunakan LazyColumn yang efisien dan smooth
+c. Setiap item menampilkan thumbnail game, judul, nama developer, dan cuplikan deskripsi
+d. Ikon favorit (❤️) pada setiap item untuk menandai/membatalkan wishlist langsung dari daftar
+e. Toggle mode Wishlist di TopAppBar — beralih antara tampilan semua game dan game favorit saja
+f. Menuju halaman detail saat item game ditekan
 
-3. **❤️ Favorite Icon (UI Interaction)**  
-   Setiap item memiliki ikon favorit (heart) sebagai elemen interaktif.
+3. 🔍 Pencarian Real-time
+Fitur pencarian terintegrasi di halaman Game List:
 
-4. **📄 Detail Game Screen**  
-   Saat item dipilih, pengguna akan masuk ke halaman detail yang menampilkan:
-   - Banner / gambar game
-   - Nama game & developer
-   - Kategori (tag)
-   - Rating & ukuran game
-   - Deskripsi lengkap
-   - Informasi update terbaru
+a. OutlinedTextField dengan ikon kaca pembesar di bagian atas daftar
+b. Filter berlangsung secara langsung saat mengetik — tanpa perlu menekan tombol apapun
+c. Pencarian tidak membedakan huruf besar/kecil (ignoreCase = true)
+d. Pesan "Game tidak ditemukan." ditampilkan jika tidak ada hasil yang cocok
+e. Dapat dikombinasikan dengan mode Wishlist untuk mencari di dalam daftar favorit
 
-5. **🧭 Navigation System**  
-   Navigasi antar halaman (List → Detail) menggunakan pendekatan modern Android.
+4. 📄 Game Detail Screen — Informasi Lengkap
+Halaman detail yang kaya informasi saat pengguna menekan salah satu game:
 
-6. **⚡ Smooth & Modern UI**  
-   Menggunakan Material Design dengan tampilan clean, card-based layout, dan responsif.
+a. Banner gambar berukuran penuh dengan sudut membulat
+b. Judul dan nama developer game
+c. Genre tags yang ditampilkan horizontal menggunakan LazyRow
+d. Rating bintang (⭐) disertai nilai numerik (contoh: 4.3 / 5.0)
+e. Ukuran file ditampilkan dalam Card yang rapi
+f. Deskripsi lengkap dengan teks rata kiri-kanan (TextAlign.Justify)
+g. Kartu Informasi Update — menampilkan patch/update terbaru game
+h. Tombol panah kembali di TopAppBar untuk kembali ke halaman sebelumnya
 
----
+5. ❤️ Wishlist / Favorit
+Sistem penandaan game favorit yang terintegrasi di seluruh aplikasi:
+
+a. Ikon hati (❤️ merah = favorit, 🤍 abu = belum favorit) pada setiap item
+b. State favorit dikelola menggunakan rememberSaveable — bertahan saat orientasi layar berubah
+c. Toggle mode "Wishlist Saya" di TopAppBar untuk menyaring hanya game favorit
+d. Penambahan dan penghapusan dari wishlist bekerja secara instan tanpa reload
 
 ## 🖼️ Tampilan Aplikasi
 Terdapat beberapa game online yang terdapat pada play store sering dimainkan oleh kebanyakan orang, Dirancang khusus untuk efisiensi dan estetika.
