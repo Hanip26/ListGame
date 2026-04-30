@@ -1,5 +1,11 @@
 package com.example.listgame.ui.screen
 
+import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,14 +17,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +42,42 @@ fun GameDetailScreen(
 ) {
     val backStack = LocalBackStack.current
     val game = DummyData.popularGames.find { it.id == gameId }
+
+    val context = LocalContext.current
+
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    var showSpecsDialog by remember { mutableStateOf(false) }
+
+    if (showSpecsDialog && game != null) {
+        AlertDialog(
+            onDismissRequest = { showSpecsDialog = false },
+            title = {
+                Text(text = "Spesifikasi Sistem", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column {
+                    Text(text = "Minimum:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(text = "• OS: Android 8.0 atau lebih baru")
+                    Text(text = "• RAM: 3 GB")
+                    Text(text = "• Penyimpanan: ${game.size} ruang kosong")
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(text = "Rekomendasi:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(text = "• OS: Android 11 atau lebih baru")
+                    Text(text = "• RAM: 6 GB atau lebih")
+                    Text(text = "• Koneksi: Internet Stabil (Wi-Fi/4G)")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSpecsDialog = false }) {
+                    Text("Tutup")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -161,6 +205,116 @@ fun GameDetailScreen(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = { showBottomSheet = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Share,
+                        contentDescription = "Bagikan",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Bagikan Game",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Tombol Pemicu Alert Dialog (Spesifikasi Perangkat)
+                OutlinedButton(
+                    onClick = { showSpecsDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Cek Spesifikasi Perangkat",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            if (showBottomSheet) {
+                val shareText = "Yuk mainkan ${game.title} bareng aku! Game-nya seru banget. \nCari di Play Store sekarang!"
+
+                ModalBottomSheet(
+                    onDismissRequest = { showBottomSheet = false },
+                    sheetState = sheetState
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .padding(bottom = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Bagikan ke Teman",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clipData = ClipData.newPlainText("Tautan Game", shareText)
+                                clipboardManager.setPrimaryClip(clipData)
+
+                                Toast.makeText(context, "Tautan berhasil disalin!", Toast.LENGTH_SHORT).show()
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Salin Tautan Game")
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    setPackage("com.whatsapp")
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
+                                try {
+                                    context.startActivity(intent)
+                                } catch (e: ActivityNotFoundException) {
+                                    Toast.makeText(context, "Aplikasi WhatsApp tidak ditemukan.", Toast.LENGTH_SHORT).show()
+                                }
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)) // Warna hijau khas WhatsApp
+                        ) {
+                            Text("Bagikan via WhatsApp", color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
+                                val chooser = Intent.createChooser(intent, "Bagikan ${game.title} via")
+                                context.startActivity(chooser)
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Pilihan Aplikasi Lainnya...")
+                        }
+                    }
+                }
             }
         }
     }
