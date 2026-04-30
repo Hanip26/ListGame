@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import com.example.listgame.navigation.LocalBackStack
@@ -54,11 +55,30 @@ fun <T> NavDisplay(
 fun ListGameApp() {
     val backStack = remember { mutableStateListOf<Route>(Route.Login) }
 
+    var favoriteGames by rememberSaveable { mutableStateOf(listOf<Int>()) }
+
+    var sortOption by rememberSaveable { mutableStateOf("A-Z") }
+
     CompositionLocalProvider(LocalBackStack provides backStack) {
         NavDisplay(backStack = backStack) { currentRoute ->
             when (currentRoute) {
                 is Route.Login -> LoginScreen()
-                is Route.Home -> GameListScreen(username = currentRoute.username)
+                is Route.Home -> GameListScreen(
+                    username = currentRoute.username,
+                    favoriteGames = favoriteGames,
+                    sortOption = sortOption,
+                    onSortChange = { newOption -> sortOption = newOption },
+                    onFavoriteToggle = { gameId ->
+                        favoriteGames = if (favoriteGames.contains(gameId)) {
+                            favoriteGames - gameId
+                        } else {
+                            favoriteGames + gameId
+                        }
+                    },
+                    onClearFavorites = {
+                        favoriteGames = emptyList()
+                    }
+                )
                 is Route.Detail -> GameDetailScreen(gameId = currentRoute.gameId)
             }
         }

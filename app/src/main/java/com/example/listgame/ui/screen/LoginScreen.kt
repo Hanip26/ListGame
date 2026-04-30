@@ -35,6 +35,19 @@ fun LoginScreen() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // --- Menambahkan Teks Judul di Sini ---
+            Text(
+                text = "List Game Populer",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             OutlinedTextField(
                 value = username,
                 onValueChange = {
@@ -52,7 +65,6 @@ fun LoginScreen() {
             Button(
                 onClick = {
                     if (username.isNotBlank()) {
-                        // Membawa data username ke halaman Home
                         backStack.add(Route.Home(username))
                     } else {
                         isError = true
