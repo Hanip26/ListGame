@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
   <img src="https://img.shields.io/badge/Min%20SDK-24%20(Android%207.0)-orange?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Target%20SDK-36-blue?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge"/> 
+  <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge"/>  
 </p>
 <p align="center">
   Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer, dilengkapi fitur login personal, pencarian real-time, halaman detail game, dan penanda favorit (wishlist).
