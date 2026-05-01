@@ -307,7 +307,7 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Pengembangan Aplikasi B
 | :---: | :--- | :---: |
 | Pertemuan 4 | https://youtube.com/shorts/VuOMfvkpf8g |
 | Pertemuan 5 | https://youtube.com/shorts/KDzaNaEwlFA |
-|             |                                        |
+| Pertemuan 6 | https://youtube.com/shorts/d-tUgYyTO3c |                                       |
 
 ---
 
