@@ -204,57 +204,9 @@ flowchart TD
 
 ## 🖼️ Tampilan Aplikasi
 
-### 📱 1. Halaman Login
-Halaman awal aplikasi. Pengguna diminta memasukkan nama pengguna pada field yang tersedia. Tombol "Masuk ke Daftar Game" memproses input dan melakukan navigasi ke halaman utama dengan membawa data username (Basic Routing & Passing Parameter).
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_login.jpeg" alt="Login Screen"/>
-</p>
-
----
-
-### 📋 2. Halaman List Game (Lazy List)
-Halaman utama setelah login. Menampilkan sapaan personal, search bar pencarian real-time, dan daftar 7 game populer menggunakan `LazyColumn`. TopAppBar menyediakan akses ke fitur Sorting, Wishlist, dan Logout.
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_listgame.jpeg" alt="Game List Screen"/>
-</p>
-
----
-
-### 📄 3. Halaman Detail Game
-Menampilkan informasi lengkap game yang dipilih: banner gambar, judul, developer, genre tags (`LazyRow`), rating, ukuran file, deskripsi, dan informasi update terbaru. Terdapat tombol "Bagikan Game" dan "Cek Spesifikasi Perangkat".
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_detail.jpeg" alt="Game Detail Screen"/>
-</p>
-
----
-
-### 📤 4. Tampilan Bagikan Game (Modal Bottom Sheet)
-Muncul dari bagian bawah layar saat menekan tombol "Bagikan Game". Menyediakan tiga opsi: Salin Tautan Game, Bagikan via WhatsApp (hijau), dan Pilihan Aplikasi Lainnya.
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_bottomsheet.jpeg" alt="Bottom Sheet - Bagikan Game"/>
-</p>
-
----
-
-### 📋 5. Tampilan Cek Spesifikasi Perangkat (Alert Dialog)
-Alert Dialog yang muncul saat menekan tombol "Cek Spesifikasi Perangkat". Menampilkan informasi spesifikasi minimum dan rekomendasi perangkat untuk memainkan game yang dipilih.
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_spesifikasi.jpeg" alt="Alert Dialog - Spesifikasi Sistem"/>
-</p>
-
----
-
-### 🚪 6. Tampilan Log Out (Alert Dialog)
-Alert Dialog konfirmasi logout yang muncul saat menekan ikon pintu keluar. Menampilkan pesan "Yakin ingin kembali ke login?" dengan pilihan **Ya** (kembali ke Login) dan **Batal** (tetap di aplikasi).
-
-<p align="center">
-  <img width="270" src="assets/screenshots/ss_logout.jpeg" alt="Alert Dialog - Konfirmasi Logout"/>
-</p>
+| Login | Lazy List | Detail Game | Bottom Sheet | Alert Dialog | Alert Dialog |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+ |<img width="295" height="750" alt="image" src="https://github.com/user-attachments/assets/65c57850-c0da-430c-937a-281b88e5ed6c" /> | <img width="295" height="750" alt="image" src="https://github.com/user-attachments/assets/7a3e07c0-862a-4fbb-a308-265ccc6a081a" /> | <img width="295" height="750" alt="image" src="https://github.com/user-attachments/assets/5426b31b-16ec-4ec1-b5db-40e63edde377" /> | <img width="295" height="740" alt="image" src="https://github.com/user-attachments/assets/4f1275e5-1abc-429c-9774-5c3abab00414" /> | <img width="295" height="740" alt="image" src="https://github.com/user-attachments/assets/8fdcd17f-9e78-4a10-8805-a3569ae0d261" /> |<img width="295" height="740" alt="image" src="https://github.com/user-attachments/assets/9358de14-f664-45bb-a42e-59bb9753b465" />
 
 ---
 
@@ -352,9 +304,10 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Pengembangan Aplikasi B
 ## 🎬 Link Demo
 
 | Pertemuan | Link |
-| :---: | :--- |
+| :---: | :--- | :---: |
 | Pertemuan 4 | https://youtube.com/shorts/VuOMfvkpf8g |
 | Pertemuan 5 | https://youtube.com/shorts/KDzaNaEwlFA |
+|             |                                        |
 
 ---
 
