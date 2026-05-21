@@ -6,6 +6,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Diamond
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Star
@@ -33,23 +37,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.listgame.data.DummyData
 import com.example.listgame.navigation.LocalBackStack
+import com.example.listgame.navigation.Route
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun GameDetailScreen(
     gameId: Int,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
     val game = DummyData.popularGames.find { it.id == gameId }
-
     val context = LocalContext.current
 
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-
     var showSpecsDialog by remember { mutableStateOf(false) }
 
+    // Dialog Spesifikasi Perangkat
     if (showSpecsDialog && game != null) {
         AlertDialog(
             onDismissRequest = { showSpecsDialog = false },
@@ -58,14 +64,22 @@ fun GameDetailScreen(
             },
             text = {
                 Column {
-                    Text(text = "Minimum:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        text = "Minimum:",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Text(text = "• OS: Android 8.0 atau lebih baru")
                     Text(text = "• RAM: 3 GB")
                     Text(text = "• Penyimpanan: ${game.size} ruang kosong")
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(text = "Rekomendasi:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        text = "Rekomendasi:",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Text(text = "• OS: Android 11 atau lebih baru")
                     Text(text = "• RAM: 6 GB atau lebih")
                     Text(text = "• Koneksi: Internet Stabil (Wi-Fi/4G)")
@@ -105,19 +119,32 @@ fun GameDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                Image(
-                    painter = painterResource(id = game.imageRes),
-                    contentDescription = "Gambar ${game.title}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                )
+
+                // Gambar Game dengan Shared Element Transition
+                with(sharedTransitionScope) {
+                    Image(
+                        painter = painterResource(id = game.imageRes),
+                        contentDescription = "Gambar ${game.title}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .sharedElement(
+                                sharedContentState = rememberSharedContentState(key = "image_${game.id}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = game.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                // Judul & Developer
+                Text(
+                    text = game.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Text(
                     text = game.developer,
                     style = MaterialTheme.typography.titleMedium,
@@ -125,6 +152,7 @@ fun GameDetailScreen(
                     modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
                 )
 
+                // Genre Chips
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -151,18 +179,25 @@ fun GameDetailScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // Rating & Ukuran
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Rounded.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = "Rating",
+                            tint = Color(0xFFFFC107)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(text = "${game.rating} / 5.0", fontWeight = FontWeight.Bold)
                     }
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
                     ) {
                         Text(
                             text = "Ukuran: ${game.size}",
@@ -176,7 +211,12 @@ fun GameDetailScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = "Deskripsi", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                // Deskripsi
+                Text(
+                    text = "Deskripsi",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = game.description,
@@ -186,15 +226,26 @@ fun GameDetailScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Informasi Update
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Rounded.Info, contentDescription = "Info", tint = MaterialTheme.colorScheme.primary)
+                            Icon(
+                                imageVector = Icons.Rounded.Info,
+                                contentDescription = "Info",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Informasi Update", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Informasi Update",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -206,9 +257,37 @@ fun GameDetailScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // ✅ TOMBOL TOP UP (Baru)
+                Button(
+                    onClick = { backStack.add(Route.TopUp(game.id)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Diamond,
+                        contentDescription = "Top Up",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Top Up Sekarang",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Tombol Bagikan Game
                 Button(
                     onClick = { showBottomSheet = true },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
@@ -217,31 +296,29 @@ fun GameDetailScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Bagikan Game",
-                        modifier = Modifier.padding(8.dp)
-                    )
+                    Text(text = "Bagikan Game")
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Tombol Pemicu Alert Dialog (Spesifikasi Perangkat)
+                // Tombol Cek Spesifikasi
                 OutlinedButton(
                     onClick = { showSpecsDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = "Cek Spesifikasi Perangkat",
-                        modifier = Modifier.padding(8.dp)
-                    )
+                    Text(text = "Cek Spesifikasi Perangkat")
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
+            // Bottom Sheet Bagikan
             if (showBottomSheet) {
-                val shareText = "Yuk mainkan ${game.title} bareng aku! Game-nya seru banget. \nCari di Play Store sekarang!"
+                val shareText =
+                    "Yuk mainkan ${game.title} bareng aku! Game-nya seru banget. \nCari di Play Store sekarang!"
 
                 ModalBottomSheet(
                     onDismissRequest = { showBottomSheet = false },
@@ -263,10 +340,10 @@ fun GameDetailScreen(
 
                         OutlinedButton(
                             onClick = {
-                                val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clipboardManager =
+                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clipData = ClipData.newPlainText("Tautan Game", shareText)
                                 clipboardManager.setPrimaryClip(clipData)
-
                                 Toast.makeText(context, "Tautan berhasil disalin!", Toast.LENGTH_SHORT).show()
                                 showBottomSheet = false
                             },
@@ -287,12 +364,16 @@ fun GameDetailScreen(
                                 try {
                                     context.startActivity(intent)
                                 } catch (e: ActivityNotFoundException) {
-                                    Toast.makeText(context, "Aplikasi WhatsApp tidak ditemukan.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Aplikasi WhatsApp tidak ditemukan.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                                 showBottomSheet = false
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)) // Warna hijau khas WhatsApp
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
                         ) {
                             Text("Bagikan via WhatsApp", color = Color.White)
                         }

@@ -9,5 +9,12 @@ data class Game(
     val size: String,
     val genres: List<String>,
     val latestUpdate: String,
-    val imageRes: Int
+    val imageRes: Int,
+    val topUpOptions: List<TopUpOption> = emptyList() // ✅ Tambah ini
+)
+
+data class TopUpOption(
+    val amount: String,       // "86 Diamond"
+    val price: String,        // "Rp 19.000"
+    val bonus: String = ""    // "Bonus 10%" (opsional)
 )

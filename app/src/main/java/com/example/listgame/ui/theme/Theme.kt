@@ -1,6 +1,5 @@
 package com.example.listgame.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -11,12 +10,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// Warna cadangan jika HP pengguna menggunakan Dark Mode (tapi Androidnya di bawah versi 12)
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
+// Warna cadangan jika HP pengguna menggunakan Light Mode (tapi Androidnya di bawah versi 12)
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
@@ -26,22 +27,24 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun ListgameTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    // Set dynamicColor = true untuk mengaktifkan Material You
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
+        // Jika HP Android 12 (S) ke atas, ambil warna dari Wallpaper HP otomatis!
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
+        // Jika HP di bawah Android 12, gunakan mode gelap/terang bawaan
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Pastikan kamu punya file Type.kt yang mendeklarasikan Typography
         content = content
     )
 }
