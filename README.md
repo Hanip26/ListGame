@@ -70,7 +70,7 @@ Aplikasi ini memungkinkan pengguna untuk:
 │           │   ├── navigation
 │           │   │   └── Routes.kt
 │           │   ├── ui
-│           │   │   ├── screen
+│           │   │   ├── screen 
 │           │   │   │   ├── GameDetailScreen.kt
 │           │   │   │   ├── GameListScreen.kt
 │           │   │   │   └── LoginScreen.kt
