@@ -43,14 +43,13 @@ class MainActivity : ComponentActivity() {
                 val favoriteGames by appViewModel.favoriteGames.collectAsState()
                 val sortOption    by appViewModel.sortOption.collectAsState()
 
-                // Helper logout terpusat — dipakai semua screen
+
                 val doLogout: () -> Unit = {
                     appViewModel.setActiveUser("")
                     authViewModel.logout()
                     backStack.clear()
                     backStack.add(Route.Login)
                 }
-
                 CompositionLocalProvider(LocalBackStack provides backStack) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -63,7 +62,6 @@ class MainActivity : ComponentActivity() {
                             ) { currentRoute ->
                                 when (currentRoute) {
 
-                                    // ── Auth ──────────────────────────────
                                     is Route.Login -> {
                                         LoginScreen(
                                             viewModel            = authViewModel,
@@ -88,7 +86,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Home ──────────────────────────────
                                     is Route.Home -> {
                                         LaunchedEffect(currentRoute.username) {
                                             appViewModel.setActiveUser(currentRoute.username)
@@ -108,7 +105,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Dashboard ─────────────────────────
                                     is Route.Dashboard -> {
                                         DashboardScreen(
                                             viewModel           = authViewModel,
@@ -117,7 +113,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Profil ────────────────────────────
                                     is Route.Profile -> {
                                         ProfileScreen(
                                             viewModel = authViewModel,
@@ -125,7 +120,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Game detail & top up ──────────────
                                     is Route.Detail -> {
                                         GameDetailScreen(
                                             gameId                  = currentRoute.gameId,

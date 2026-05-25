@@ -12,7 +12,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dataStore = AppDataStore(application)
 
-    // ── State global ──────────────────────────────────────────────────────────
     val sortOption: StateFlow<String> = dataStore.sortOptionFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "A-Z")
 
@@ -22,13 +21,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkThemeFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    // ── Favorit per-akun ──────────────────────────────────────────────────────
-    // activeUsername di-set oleh MainActivity setiap kali ada login/logout.
-    // FlatMapLatest memastikan Flow favorit langsung berganti saat username ganti
-    // — tidak perlu restart app.
     private val _activeUsername = MutableStateFlow("")
 
-    /** Dipanggil MainActivity setiap kali user login atau logout. */
     fun setActiveUser(username: String) {
         _activeUsername.value = username
     }
@@ -41,7 +35,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // ── Actions ───────────────────────────────────────────────────────────────
 
     fun toggleFavorite(gameId: Int) {
         val username = _activeUsername.value

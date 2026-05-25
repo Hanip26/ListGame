@@ -6,8 +6,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 sealed class Route {
     object Login     : Route()
     object Register  : Route()
-    object Profile   : Route()   // ← BARU
-    object Dashboard : Route()   // ← BARU
+    object Profile   : Route()
+    object Dashboard : Route()
 
     data class Home(val username: String) : Route()
     data class Detail(val gameId: Int)    : Route()
