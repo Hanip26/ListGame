@@ -298,7 +298,7 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Pengembangan Aplikasi B
 | 1 | Hanief Fahrel Wilianto | L0324016 |
 | 2 | Muhammad Affan Nur Zhafariza | L0324022 |
 | 3 | Muhammad Rafii Setianto | L0324026 |
-
+ 
 ---
 
 ## 🎬 Link Demo
