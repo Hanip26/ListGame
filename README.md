@@ -364,15 +364,18 @@ Payment Progress Screen
 
 | Login | Register | Dashboard |
 | :---: | :---: | :---: |
-| Tambahkan Screenshot | Tambahkan Screenshot | Tambahkan Screenshot |
+| <img width="340" height="700" alt="WhatsApp Image 2026-05-25 at 17 40 50" src="https://github.com/user-attachments/assets/775dab7a-d943-46a1-ade0-7aa643dfb7e2" /> | <img width="324" height="700" alt="WhatsApp Image 2026-05-25 at 17 44 16" src="https://github.com/user-attachments/assets/d6149f77-8158-413e-92b5-eba217305a1e" /> | <img width="304" height="700" alt="WhatsApp Image 2026-05-25 at 17 49 39" src="https://github.com/user-attachments/assets/c5ceba5a-4f28-4b36-9b00-e7594e432614" />
+
 
 | Game List | Detail Game | Top Up |
 | :---: | :---: | :---: |
-| Tambahkan Screenshot | Tambahkan Screenshot | Tambahkan Screenshot |
+| <img width="340" height="700" alt="WhatsApp Image 2026-05-25 at 17 47 08" src="https://github.com/user-attachments/assets/160f851e-0b4f-47d5-811b-1a039fbc71bf" /> | <img width="303" height="700" alt="WhatsApp Image 2026-05-25 at 17 53 44" src="https://github.com/user-attachments/assets/ccf75fc0-a18d-4453-9896-6258d33b78ad" /> | <img width="340" height="700" alt="WhatsApp Image 2026-05-25 at 17 58 41" src="https://github.com/user-attachments/assets/2c06c281-2f27-49bf-94d2-fd67ec58bc1a" />
+
 
 | Confirmation | Payment Progress | Profile |
 | :---: | :---: | :---: |
-| Tambahkan Screenshot | Tambahkan Screenshot | Tambahkan Screenshot |
+| <img width="340" height="700" alt="WhatsApp Image 2026-05-25 at 18 00 09" src="https://github.com/user-attachments/assets/1f1e272d-107f-47b8-8ec6-4d4bd211d670" /> | <img width="306" height="700" alt="WhatsApp Image 2026-05-25 at 18 03 09" src="https://github.com/user-attachments/assets/794bfd34-2b22-4f62-8c7a-3ecf809e26da" /> | <img width="334" height="700" alt="WhatsApp Image 2026-05-25 at 18 06 36" src="https://github.com/user-attachments/assets/47657589-d7a5-48c9-9cb5-f443e3799e6a" />
+
 
 ---
 
