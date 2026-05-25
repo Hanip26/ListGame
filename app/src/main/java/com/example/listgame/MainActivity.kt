@@ -3,78 +3,133 @@ package com.example.listgame
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
-import com.example.listgame.ui.screen.GameDetailScreen
-import com.example.listgame.ui.screen.GameListScreen
-import com.example.listgame.ui.screen.LoginScreen
-import com.example.listgame.ui.screen.OrderConfirmationScreen
-import com.example.listgame.ui.screen.PaymentProgressScreen
-import com.example.listgame.ui.screen.TopUpScreen
+import com.example.listgame.ui.screen.*
 import com.example.listgame.ui.theme.ListgameTheme
+import com.example.listgame.viewmodel.AppViewModel
+import com.example.listgame.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 class MainActivity : ComponentActivity() {
+
+    private val appViewModel  : AppViewModel  by viewModels()
+    private val authViewModel : AuthViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ListgameTheme {
-                val backStack = remember { mutableStateListOf<Route>(Route.Login) }
+            val isDarkTheme   by appViewModel.isDarkTheme.collectAsState()
+            val isLoggedIn    by authViewModel.isLoggedIn.collectAsState()
+            val savedUsername by authViewModel.loggedInUsername.collectAsState()
 
-                val favoriteGames = remember { mutableStateListOf<Int>() }
-                var sortOption by remember { mutableStateOf("A-Z") }
+            ListgameTheme(darkTheme = isDarkTheme) {
+                val backStack = remember {
+                    mutableStateListOf<Route>(
+                        if (isLoggedIn && savedUsername.isNotBlank()) Route.Home(savedUsername)
+                        else Route.Login
+                    )
+                }
+
+                val favoriteGames by appViewModel.favoriteGames.collectAsState()
+                val sortOption    by appViewModel.sortOption.collectAsState()
+
+                // Helper logout terpusat — dipakai semua screen
+                val doLogout: () -> Unit = {
+                    appViewModel.setActiveUser("")
+                    authViewModel.logout()
+                    backStack.clear()
+                    backStack.add(Route.Login)
+                }
 
                 CompositionLocalProvider(LocalBackStack provides backStack) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
+                        color    = MaterialTheme.colorScheme.background
                     ) {
                         SharedTransitionLayout {
                             AnimatedContent(
                                 targetState = backStack.lastOrNull(),
-                                label = "NexusNavigation"
+                                label       = "NexusNavigation"
                             ) { currentRoute ->
                                 when (currentRoute) {
 
+                                    // ── Auth ──────────────────────────────
                                     is Route.Login -> {
-                                        LoginScreen()
+                                        LoginScreen(
+                                            viewModel            = authViewModel,
+                                            onLoginSuccess       = { username ->
+                                                appViewModel.setActiveUser(username)
+                                                backStack.clear()
+                                                backStack.add(Route.Home(username))
+                                            },
+                                            onNavigateToRegister = { backStack.add(Route.Register) }
+                                        )
                                     }
 
-                                    is Route.Home -> {
-                                        GameListScreen(
-                                            username = currentRoute.username,
-                                            favoriteGames = favoriteGames,
-                                            sortOption = sortOption,
-                                            onSortChange = { sortOption = it },
-                                            onFavoriteToggle = { gameId ->
-                                                if (favoriteGames.contains(gameId))
-                                                    favoriteGames.remove(gameId)
-                                                else
-                                                    favoriteGames.add(gameId)
+                                    is Route.Register -> {
+                                        RegisterScreen(
+                                            viewModel         = authViewModel,
+                                            onRegisterSuccess = { username ->
+                                                appViewModel.setActiveUser(username)
+                                                backStack.clear()
+                                                backStack.add(Route.Home(username))
                                             },
-                                            onClearFavorites = { favoriteGames.clear() },
-                                            sharedTransitionScope = this@SharedTransitionLayout,
+                                            onNavigateBack = { backStack.removeLastOrNull() }
+                                        )
+                                    }
+
+                                    // ── Home ──────────────────────────────
+                                    is Route.Home -> {
+                                        LaunchedEffect(currentRoute.username) {
+                                            appViewModel.setActiveUser(currentRoute.username)
+                                        }
+                                        GameListScreen(
+                                            username              = currentRoute.username,
+                                            favoriteGames         = favoriteGames,
+                                            sortOption            = sortOption,
+                                            onSortChange          = { appViewModel.saveSortOption(it) },
+                                            onFavoriteToggle      = { appViewModel.toggleFavorite(it) },
+                                            onClearFavorites      = { appViewModel.clearFavorites() },
+                                            onLogout              = doLogout,
+                                            onNavigateToDashboard = { backStack.add(Route.Dashboard) },
+                                            onNavigateToProfile   = { backStack.add(Route.Profile) },
+                                            sharedTransitionScope   = this@SharedTransitionLayout,
                                             animatedVisibilityScope = this@AnimatedContent
                                         )
                                     }
 
+                                    // ── Dashboard ─────────────────────────
+                                    is Route.Dashboard -> {
+                                        DashboardScreen(
+                                            viewModel           = authViewModel,
+                                            onNavigateToProfile = { backStack.add(Route.Profile) },
+                                            onLogout            = doLogout
+                                        )
+                                    }
+
+                                    // ── Profil ────────────────────────────
+                                    is Route.Profile -> {
+                                        ProfileScreen(
+                                            viewModel = authViewModel,
+                                            onLogout  = doLogout
+                                        )
+                                    }
+
+                                    // ── Game detail & top up ──────────────
                                     is Route.Detail -> {
                                         GameDetailScreen(
-                                            gameId = currentRoute.gameId,
-                                            sharedTransitionScope = this@SharedTransitionLayout,
+                                            gameId                  = currentRoute.gameId,
+                                            sharedTransitionScope   = this@SharedTransitionLayout,
                                             animatedVisibilityScope = this@AnimatedContent
                                         )
                                     }
@@ -83,12 +138,10 @@ class MainActivity : ComponentActivity() {
                                         TopUpScreen(gameId = currentRoute.gameId)
                                     }
 
-                                    // ✅ Halaman Konfirmasi Pesanan
                                     is Route.OrderConfirmation -> {
                                         OrderConfirmationScreen(route = currentRoute)
                                     }
 
-                                    // ✅ Halaman Progress Pembayaran
                                     is Route.PaymentProgress -> {
                                         PaymentProgressScreen(route = currentRoute)
                                     }
