@@ -14,11 +14,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
-    val usernameOrEmail  : String  = "",
-    val password         : String  = "",
-    val isPasswordVisible: Boolean = false,
-    val isLoading        : Boolean = false,
-    val errorMessage     : String? = null,
+    val usernameOrEmail      : String  = "",
+    val password             : String  = "",
+    val isPasswordVisible    : Boolean = false,
+    val isLoading            : Boolean = false,
+    val errorMessage         : String? = null,
+    val registerSuccessMessage: String? = null,  // snackbar setelah register
 )
 
 data class RegisterUiState(
@@ -58,7 +59,8 @@ data class ProfileUiState(
 
 sealed class AuthEvent {
     data class LoginSuccess(val username: String)    : AuthEvent()
-    data class RegisterSuccess(val username: String) : AuthEvent()
+    // registerSuccessMessage = pesan yang ditampilkan di LoginScreen sebagai snackbar
+    data class RegisterSuccess(val displayName: String) : AuthEvent()
 }
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
@@ -92,6 +94,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _loginState.update { it.copy(password = v, errorMessage = null) }
     fun onLoginPasswordVisibilityToggle() =
         _loginState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+
+    /** Dipanggil MainActivity setelah redirect dari Register agar snackbar muncul di LoginScreen. */
+    fun setRegisterSuccessMessage(name: String) {
+        _loginState.update { it.copy(registerSuccessMessage = "Akun '$name' berhasil dibuat! Silakan masuk.") }
+    }
+
+    fun clearRegisterSuccessMessage() {
+        _loginState.update { it.copy(registerSuccessMessage = null) }
+    }
 
     fun submitLogin() {
         val s = _loginState.value
@@ -138,8 +149,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             _registerState.update { it.copy(isLoading = true) }
             when (repository.register(s.username, s.email, s.password, s.displayName)) {
                 RegisterResult.Success -> {
+                    val name = s.displayName.trim()
                     _registerState.value = RegisterUiState()
-                    _authEvent.emit(AuthEvent.RegisterSuccess(s.username))
+                    // Tidak auto-login; minta user masuk manual
+                    // agar sesi DataStore selalu diinisialisasi lewat submitLogin()
+                    _authEvent.emit(AuthEvent.RegisterSuccess(name))
                 }
                 RegisterResult.UsernameTaken ->
                     _registerState.update { it.copy(isLoading = false, usernameError = "Username sudah dipakai.") }

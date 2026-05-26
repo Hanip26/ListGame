@@ -1,5 +1,6 @@
 package com.example.listgame.ui.screen
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,52 +27,81 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.listgame.data.DummyData
+import com.example.listgame.model.Transaction
+import com.example.listgame.model.TransactionStatus
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
+import com.example.listgame.viewmodel.AppViewModel
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
-enum class TransactionStep { CREATED, PAYMENT, PROCESSING, DONE }
+// ── Enum step transaksi ───────────────────────────────────────────────────────
+private enum class TxStep { CREATED, PAYMENT, PROCESSING, DONE }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PaymentProgressScreen(route: Route.PaymentProgress) {
+fun PaymentProgressScreen(
+    route        : Route.PaymentProgress,
+    appViewModel : AppViewModel
+) {
     val backStack = LocalBackStack.current
     val game      = DummyData.popularGames.find { it.id == route.gameId }
 
-    var currentStep    by remember { mutableStateOf(TransactionStep.CREATED) }
+    var currentStep    by remember { mutableStateOf(TxStep.CREATED) }
     var isPaymentDone  by remember { mutableStateOf(false) }
-    var countdown      by remember { mutableIntStateOf(10799) } // 3 jam dalam detik
     var completionTime by remember { mutableStateOf("") }
+    var countdown      by remember { mutableIntStateOf(10799) }
 
     val invoiceNumber = remember {
         "LD${System.currentTimeMillis().toString().takeLast(10)}"
     }
 
-    fun formatRp(value: Int) = "Rp ${"%,d".format(value).replace(',', '.')}"
+    fun formatRp(v: Int) = "Rp ${"%,d".format(v).replace(',', '.')}"
 
-    // ── Simulasi progress: jeda ~2 menit di tahap PAYMENT ────────────────────
+    // ── Rotasi ikon loading ───────────────────────────────────────────────────
+    val rotation by rememberInfiniteTransition(label = "spin").animateFloat(
+        initialValue  = 0f,
+        targetValue   = 360f,
+        animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing)),
+        label         = "rotation"
+    )
+
+    // ── Simulasi progress: 2 menit di PAYMENT ────────────────────────────────
     LaunchedEffect(Unit) {
         delay(800L)
-        currentStep = TransactionStep.PAYMENT   // mulai menunggu bayar
+        currentStep = TxStep.PAYMENT
 
-        delay(60_000L)                          // ✅ 2 menit menunggu pembayaran
+        delay(30_000L)   // 2 menit menunggu bayar
 
-        currentStep = TransactionStep.PROCESSING
-        delay(10_000L)
+        currentStep = TxStep.PROCESSING
+        delay(3_000L)
 
-        currentStep = TransactionStep.DONE
+        currentStep   = TxStep.DONE
         isPaymentDone = true
         completionTime = SimpleDateFormat(
             "yyyy/MM/dd HH:mm:ss", Locale.getDefault()
         ).format(Date())
+
+        // ── Simpan transaksi ke DataStore ─────────────────────────────────
+        appViewModel.addTransaction(
+            Transaction(
+                invoiceId  = invoiceNumber,
+                gameTitle  = game?.title ?: "Unknown",
+                gameId     = route.gameId,
+                playerId   = route.playerId,
+                item       = "${route.amount} (x${route.quantity})",
+                payment    = route.paymentName,
+                totalPrice = route.totalPrice,
+                status     = TransactionStatus.SUCCESS
+            )
+        )
     }
 
-    // ── Countdown mundur hanya saat PAYMENT ──────────────────────────────────
+    // ── Countdown mundur ──────────────────────────────────────────────────────
     LaunchedEffect(currentStep) {
-        if (currentStep == TransactionStep.PAYMENT) {
-            while (countdown > 0 && currentStep == TransactionStep.PAYMENT) {
+        if (currentStep == TxStep.PAYMENT) {
+            while (countdown > 0 && currentStep == TxStep.PAYMENT) {
                 delay(1_000L)
                 countdown--
             }
@@ -85,21 +115,17 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
         "%d Jam  %02d Menit  %02d Detik".format(h, m, s)
     }
 
-    // Warna TopAppBar & banner
-    val isDone         = isPaymentDone
-    val topBarColor    = if (isDone) Color(0xFF4CAF50)
-    else MaterialTheme.colorScheme.primaryContainer
-    val bannerBg       = if (isDone) Color(0xFF4CAF50) else Color(0xFFFFCC00)
-    val bannerText     = if (isDone) Color.White       else Color(0xFFCC8800)
+    val bannerBg   = if (isPaymentDone) Color(0xFF4CAF50) else Color(0xFFFFCC00)
+    val bannerText = if (isPaymentDone) Color.White       else Color(0xFFCC8800)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        if (isDone) "Pesanan Selesai" else "Menunggu Pembayaran",
+                        if (isPaymentDone) "Pesanan Selesai" else "Menunggu Pembayaran",
                         fontWeight = FontWeight.Bold,
-                        color = if (isDone) Color.White
+                        color      = if (isPaymentDone) Color.White
                         else MaterialTheme.colorScheme.onSurface
                     )
                 },
@@ -111,13 +137,14 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                     }) {
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowBack, "Kembali",
-                            tint = if (isDone) Color.White
+                            tint = if (isPaymentDone) Color.White
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarColor
+                    containerColor = if (isPaymentDone) Color(0xFF4CAF50)
+                    else MaterialTheme.colorScheme.primaryContainer
                 )
             )
         }
@@ -128,9 +155,10 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
+
             // ── Banner Atas ───────────────────────────────────────────────
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .fillMaxWidth()
                     .background(bannerBg)
                     .padding(vertical = 36.dp),
@@ -140,10 +168,10 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    if (isDone) {
-                        // ✅ Banner hijau — selesai
+                    if (isPaymentDone) {
+                        // Banner hijau — selesai
                         Text("✦  ✧  ✦",
-                            color = Color.White.copy(alpha = 0.6f),
+                            color    = Color.White.copy(alpha = 0.6f),
                             fontSize = 14.sp)
                         Box(
                             modifier = Modifier
@@ -153,30 +181,30 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Rounded.Check, null,
-                                tint = Color.White,
+                                tint     = Color.White,
                                 modifier = Modifier.size(44.dp))
                         }
                         Text("Pesanan Selesai!",
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp,
-                            color = Color.White)
+                            fontSize   = 22.sp,
+                            color      = Color.White)
                         Text("Pesanan kamu sudah berhasil diproses!",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.85f))
                     } else {
-                        // ✅ Banner kuning — menunggu
+                        // Banner kuning — menunggu
                         WaitingBannerIllustration()
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("Menunggu Pembayaran",
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp,
-                            color = bannerText)
+                            fontSize   = 22.sp,
+                            color      = bannerText)
                         Text(
                             "Silahkan untuk melakukan pembayaran\ndengan metode yang kamu pilih.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = bannerText.copy(alpha = 0.85f),
+                            style     = MaterialTheme.typography.bodyMedium,
+                            color     = bannerText.copy(alpha = 0.85f),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
+                            modifier  = Modifier.padding(horizontal = 32.dp)
                         )
                     }
                 }
@@ -184,40 +212,41 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
 
             // ── Konten Utama ──────────────────────────────────────────────
             Column(
-                modifier = Modifier
+                modifier            = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
                 // Progress Transaksi
                 Text("Progress Transaksi",
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium)
+                    style      = MaterialTheme.typography.titleMedium)
 
-                TransactionProgressBar(currentStep = currentStep)
+                TxProgressBar(currentStep = currentStep)
 
-                // Countdown timer
-                if (!isDone) {
+                // Countdown
+                if (!isPaymentDone) {
                     Surface(
-                        shape  = RoundedCornerShape(12.dp),
-                        color  = Color(0xFFFF6B00).copy(alpha = 0.13f),
+                        shape    = RoundedCornerShape(12.dp),
+                        color    = Color(0xFFFF6B00).copy(alpha = 0.13f),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier
+                            modifier              = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 14.dp),
                             horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment     = Alignment.CenterVertically
                         ) {
                             Icon(Icons.Rounded.Timer, null,
-                                tint = Color(0xFFFF6B00),
+                                tint     = Color(0xFFFF6B00),
                                 modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(countdownText,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFF6B00),
-                                fontSize = 15.sp)
+                                color      = Color(0xFFFF6B00),
+                                fontSize   = 15.sp)
                         }
                     }
                 }
@@ -232,33 +261,32 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                 ) {
                     Column {
                         Row(
-                            modifier = Modifier.padding(14.dp),
+                            modifier              = Modifier.padding(14.dp),
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            verticalAlignment = Alignment.Top
+                            verticalAlignment     = Alignment.Top
                         ) {
                             game?.let {
                                 Image(
-                                    painter = painterResource(id = it.imageRes),
+                                    painter            = painterResource(id = it.imageRes),
                                     contentDescription = null,
-                                    modifier = Modifier
+                                    modifier           = Modifier
                                         .size(80.dp)
                                         .clip(RoundedCornerShape(10.dp)),
-                                    contentScale = ContentScale.Crop
+                                    contentScale       = ContentScale.Crop
                                 )
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                 Text("Informasi Akun",
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.titleSmall)
-                                // ✅ Username & ID terpisah
-                                AccountInfoRow("Nickname", route.username)
-                                AccountInfoRow("ID",       route.playerId)
-                                AccountInfoRow("Item",     "${route.amount} (x${route.quantity})")
+                                    color      = MaterialTheme.colorScheme.primary,
+                                    style      = MaterialTheme.typography.titleSmall)
+                                TxInfoRow("Nickname", route.username)
+                                TxInfoRow("ID",       route.playerId)
+                                TxInfoRow("Item",     "${route.amount} (x${route.quantity})")
                             }
                         }
                         Box(
-                            modifier = Modifier
+                            modifier         = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .padding(10.dp),
@@ -266,15 +294,15 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                         ) {
                             Text(game?.title ?: "-",
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                style      = MaterialTheme.typography.labelLarge,
+                                color      = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                     }
                 }
 
                 // ── Rincian & Status (2 kolom) ────────────────────────────
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Rincian Pembayaran
@@ -286,12 +314,12 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                         )
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier            = Modifier.padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("Rincian Pembayaran",
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge)
+                                style      = MaterialTheme.typography.labelLarge)
                             HorizontalDivider(
                                 color = MaterialTheme.colorScheme.outlineVariant
                             )
@@ -300,23 +328,22 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                             val unitPrice = if (route.quantity > 0)
                                 route.subtotal / route.quantity else 0
 
-                            PayDetailRow("Harga",    formatRp(unitPrice))
-                            PayDetailRow("Jumlah",   "${route.quantity}x")
-                            PayDetailRow("Subtotal", formatRp(route.subtotal))
-                            PayDetailRow("Biaya",    formatRp(route.adminFee))
+                            TxDetailRow("Harga",    formatRp(unitPrice))
+                            TxDetailRow("Jumlah",   "${route.quantity}x")
+                            TxDetailRow("Subtotal", formatRp(route.subtotal))
+                            TxDetailRow("Biaya",    formatRp(route.adminFee))
 
                             HorizontalDivider(
                                 color = MaterialTheme.colorScheme.outlineVariant
                             )
-
                             Text("Total Pembayaran",
                                 fontWeight = FontWeight.Bold,
                                 fontSize   = 11.sp,
                                 style      = MaterialTheme.typography.bodySmall)
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment     = Alignment.CenterVertically
                             ) {
                                 Text(formatRp(route.totalPrice),
                                     fontWeight = FontWeight.ExtraBold,
@@ -338,12 +365,12 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                         )
                     ) {
                         Column(
-                            modifier = Modifier.padding(12.dp),
+                            modifier            = Modifier.padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("Metode Pembayaran",
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge)
+                                style      = MaterialTheme.typography.labelLarge)
                             Text(route.paymentName,
                                 style      = MaterialTheme.typography.bodySmall,
                                 color      = MaterialTheme.colorScheme.primary,
@@ -355,7 +382,7 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                                verticalAlignment     = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(invoiceNumber,
@@ -372,9 +399,9 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                             Text("Status Pembayaran",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            StatusBadge(
-                                label = if (isDone) "PAID" else "UNPAID",
-                                color = if (isDone) Color(0xFF4CAF50)
+                            TxStatusBadge(
+                                label = if (isPaymentDone) "PAID" else "UNPAID",
+                                color = if (isPaymentDone) Color(0xFF4CAF50)
                                 else Color(0xFFFFC107)
                             )
 
@@ -383,19 +410,18 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                             Text("Status Transaksi",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            // ✅ Step DONE berwarna hijau
-                            StatusBadge(
+                            TxStatusBadge(
                                 label = when (currentStep) {
-                                    TransactionStep.CREATED    -> "CREATED"
-                                    TransactionStep.PAYMENT    -> "PENDING"
-                                    TransactionStep.PROCESSING -> "PROCESSING"
-                                    TransactionStep.DONE       -> "SUCCESS"
+                                    TxStep.CREATED    -> "CREATED"
+                                    TxStep.PAYMENT    -> "PENDING"
+                                    TxStep.PROCESSING -> "PROCESSING"
+                                    TxStep.DONE       -> "SUCCESS"
                                 },
                                 color = when (currentStep) {
-                                    TransactionStep.CREATED    -> Color(0xFF90CAF9)
-                                    TransactionStep.PAYMENT    -> Color(0xFFFF9800)
-                                    TransactionStep.PROCESSING -> Color(0xFF42A5F5)
-                                    TransactionStep.DONE       -> Color(0xFF4CAF50) // ✅ Hijau
+                                    TxStep.CREATED    -> Color(0xFF90CAF9)
+                                    TxStep.PAYMENT    -> Color(0xFFFF9800)
+                                    TxStep.PROCESSING -> Color(0xFF42A5F5)
+                                    TxStep.DONE       -> Color(0xFF4CAF50)
                                 }
                             )
 
@@ -406,18 +432,14 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 text = when (currentStep) {
-                                    TransactionStep.CREATED    ->
-                                        "Transaksi berhasil dibuat."
-                                    TransactionStep.PAYMENT    ->
-                                        "Your order is being processed. Please wait!"
-                                    TransactionStep.PROCESSING ->
-                                        "Sedang diproses oleh sistem."
-                                    TransactionStep.DONE       ->
-                                        "Transaction completed at $completionTime WIB"
+                                    TxStep.CREATED    -> "Transaksi berhasil dibuat."
+                                    TxStep.PAYMENT    -> "Your order is being processed. Please wait!"
+                                    TxStep.PROCESSING -> "Sedang diproses oleh sistem."
+                                    TxStep.DONE       -> "Transaction completed at $completionTime WIB"
                                 },
                                 style      = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color      = if (isDone) Color(0xFF4CAF50)  // ✅ Hijau
+                                color      = if (isPaymentDone) Color(0xFF4CAF50)
                                 else MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -425,16 +447,17 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                 }
 
                 // ── QR Code (QRIS & belum selesai) ───────────────────────
-                if (!isDone &&
-                    route.paymentName.contains("QRIS", ignoreCase = true)) {
-                    QrCodeSection()
+                if (!isPaymentDone &&
+                    route.paymentName.contains("QRIS", ignoreCase = true)
+                ) {
+                    TxQrCodeSection()
                 }
 
                 // ── Instruksi Pembayaran ──────────────────────────────────
-                PaymentInstructionSection(paymentName = route.paymentName)
+                TxInstructionSection(paymentName = route.paymentName)
 
-                // ── Tombol Beli Lagi (setelah selesai) ───────────────────
-                if (isDone) {
+                // ── Tombol Beli Lagi / Selesai ────────────────────────────
+                if (isPaymentDone) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Button(
                         onClick = {
@@ -443,18 +466,16 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
                             backStack.clear()
                             backStack.add(home ?: Route.Login)
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape  = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF6B00)
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape    = RoundedCornerShape(14.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50)
                         )
                     ) {
-                        Icon(Icons.Rounded.ShoppingCart, null,
+                        Icon(Icons.Rounded.Home, null,
                             modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Beli Lagi",
+                        Text("Kembali ke Beranda",
                             fontWeight = FontWeight.Bold,
                             color      = Color.White)
                     }
@@ -469,11 +490,8 @@ fun PaymentProgressScreen(route: Route.PaymentProgress) {
 // ── Ilustrasi Banner Menunggu ─────────────────────────────────────────────────
 
 @Composable
-fun WaitingBannerIllustration() {
-    Box(
-        modifier = Modifier.size(120.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
+private fun WaitingBannerIllustration() {
+    Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.BottomCenter) {
         // Kartu bank
         Card(
             modifier = Modifier
@@ -484,14 +502,12 @@ fun WaitingBannerIllustration() {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF546E7A))
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp),
+                modifier            = Modifier.fillMaxSize().padding(10.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Text("BANK", fontSize = 8.sp,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color      = Color.White.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Bold)
                 }
                 Text("XXXX  1234", fontSize = 9.sp,
@@ -508,9 +524,7 @@ fun WaitingBannerIllustration() {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF78909C))
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
+                modifier            = Modifier.fillMaxSize().padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -521,7 +535,7 @@ fun WaitingBannerIllustration() {
                     .background(Color(0xFF90A4AE)))
                 repeat(3) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         repeat(3) {
@@ -538,25 +552,23 @@ fun WaitingBannerIllustration() {
     }
 }
 
-// ── Progress Bar ──────────────────────────────────────────────────────────────
+// ── Progress Bar 4 Langkah ────────────────────────────────────────────────────
 
 @Composable
-fun TransactionProgressBar(currentStep: TransactionStep) {
+private fun TxProgressBar(currentStep: TxStep) {
     data class StepInfo(
-        val step: TransactionStep,
-        val icon: ImageVector,
-        val label: String,
-        val subLabel: String
+        val step: TxStep, val icon: ImageVector,
+        val label: String, val subLabel: String
     )
 
     val steps = listOf(
-        StepInfo(TransactionStep.CREATED,    Icons.Rounded.CheckCircle,
+        StepInfo(TxStep.CREATED,    Icons.Rounded.CheckCircle,
             "Transaksi Dibuat",  "Transaksi telah berhasil dibuat"),
-        StepInfo(TransactionStep.PAYMENT,    Icons.Rounded.Payment,
+        StepInfo(TxStep.PAYMENT,    Icons.Rounded.Payment,
             "Pembayaran",        "Silakan melakukan pembayaran"),
-        StepInfo(TransactionStep.PROCESSING, Icons.Rounded.Autorenew,
+        StepInfo(TxStep.PROCESSING, Icons.Rounded.Autorenew,
             "Sedang Di Proses",  "Pembelian sedang dalam proses."),
-        StepInfo(TransactionStep.DONE,       Icons.Rounded.TaskAlt,
+        StepInfo(TxStep.DONE,       Icons.Rounded.TaskAlt,
             "Transaksi Selesai", "Transaksi telah berhasil dilakukan.")
     )
 
@@ -565,7 +577,7 @@ fun TransactionProgressBar(currentStep: TransactionStep) {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier          = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             steps.forEachIndexed { index, info ->
@@ -573,16 +585,15 @@ fun TransactionProgressBar(currentStep: TransactionStep) {
                 val isDone    = stepIndex < currentIndex
                 val isActive  = info.step == currentStep
 
-                // ✅ Warna lingkaran: hijau jika selesai, oranye jika aktif
                 val circleColor = when {
                     isDone   -> Color(0xFF4CAF50)
-                    isActive -> if (currentStep == TransactionStep.DONE)
-                        Color(0xFF4CAF50) else Color(0xFFFF6B00)
+                    isActive -> if (currentStep == TxStep.DONE) Color(0xFF4CAF50)
+                    else Color(0xFFFF6B00)
                     else     -> MaterialTheme.colorScheme.outlineVariant
                 }
 
                 Box(
-                    modifier = Modifier
+                    modifier         = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
                         .background(circleColor),
@@ -620,19 +631,18 @@ fun TransactionProgressBar(currentStep: TransactionStep) {
                 }
 
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier            = Modifier.weight(1f),
                     horizontalAlignment = when (index) {
                         0               -> Alignment.Start
                         steps.lastIndex -> Alignment.End
                         else            -> Alignment.CenterHorizontally
                     }
                 ) {
-                    // ✅ Label hijau saat DONE
                     Text(info.label,
                         style      = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
                         color = when {
-                            currentStep == TransactionStep.DONE -> Color(0xFF4CAF50)
+                            currentStep == TxStep.DONE -> Color(0xFF4CAF50)
                             isActive -> Color(0xFFFF6B00)
                             isDone   -> Color(0xFF4CAF50)
                             else     -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -650,10 +660,10 @@ fun TransactionProgressBar(currentStep: TransactionStep) {
     }
 }
 
-// ── QR Code Section ───────────────────────────────────────────────────────────
+// ── QR Code ───────────────────────────────────────────────────────────────────
 
 @Composable
-fun QrCodeSection() {
+private fun TxQrCodeSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(14.dp),
@@ -662,14 +672,12 @@ fun QrCodeSection() {
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier            = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .size(180.dp)
                     .border(2.dp,
                         MaterialTheme.colorScheme.outline,
@@ -691,8 +699,7 @@ fun QrCodeSection() {
             ) {
                 Icon(Icons.Rounded.Download, null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Unduh Kode QR",
-                    color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Unduh Kode QR", color = Color.White, fontWeight = FontWeight.Bold)
             }
             Text("Screenshot jika QR Code tidak bisa di-download.",
                 style = MaterialTheme.typography.labelSmall,
@@ -704,7 +711,7 @@ fun QrCodeSection() {
 // ── Instruksi Pembayaran ──────────────────────────────────────────────────────
 
 @Composable
-fun PaymentInstructionSection(paymentName: String) {
+private fun TxInstructionSection(paymentName: String) {
     var expanded by remember { mutableStateOf(false) }
 
     val instructions = when {
@@ -720,13 +727,6 @@ fun PaymentInstructionSection(paymentName: String) {
             "2) Pilih menu Scan",
             "3) Arahkan kamera ke QR Code",
             "4) Konfirmasi pembayaran",
-            "5) Bayar"
-        )
-        paymentName.contains("DANA",            ignoreCase = true) -> listOf(
-            "1) Buka aplikasi DANA",
-            "2) Pilih Scan QR",
-            "3) Scan QR Code pembayaran",
-            "4) Masukkan PIN DANA",
             "5) Bayar"
         )
         paymentName.contains("Virtual Account", ignoreCase = true) -> listOf(
@@ -780,7 +780,7 @@ fun PaymentInstructionSection(paymentName: String) {
                 modifier   = Modifier.padding(16.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Row(
-                modifier = Modifier
+                modifier              = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -805,7 +805,7 @@ fun PaymentInstructionSection(paymentName: String) {
                     color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier            = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     instructions.forEach { step ->
@@ -819,10 +819,10 @@ fun PaymentInstructionSection(paymentName: String) {
     }
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────────
+// ── Helper Composables ────────────────────────────────────────────────────────
 
 @Composable
-fun AccountInfoRow(label: String, value: String) {
+private fun TxInfoRow(label: String, value: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("$label :",
             style    = MaterialTheme.typography.bodySmall,
@@ -835,9 +835,9 @@ fun AccountInfoRow(label: String, value: String) {
 }
 
 @Composable
-fun PayDetailRow(label: String, value: String) {
+private fun TxDetailRow(label: String, value: String) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label,
@@ -850,7 +850,7 @@ fun PayDetailRow(label: String, value: String) {
 }
 
 @Composable
-fun StatusBadge(label: String, color: Color) {
+private fun TxStatusBadge(label: String, color: Color) {
     Surface(
         shape = RoundedCornerShape(6.dp),
         color = color.copy(alpha = 0.18f)

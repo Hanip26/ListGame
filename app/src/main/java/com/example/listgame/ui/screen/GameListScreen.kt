@@ -222,13 +222,13 @@ fun GameListScreen(
                             // ── Grup 1: Fitur utama ───────────────────────
                             MenuSectionLabel("Fitur")
 
+                            // ✅ GANTI Top Up → Kalkulator Win Rate
                             NexusMenuItem(
-                                icon    = Icons.Rounded.ShoppingCart,
-                                label   = "Top Up",
-                                iconTint = MaterialTheme.colorScheme.primary,
-                                onClick = {
+                                icon     = Icons.Rounded.Calculate,
+                                label    = "Kalkulator Win Rate",
+                                onClick  = {
                                     showDropdownMenu = false
-                                    // TODO: navigasi ke TopUp general jika ada
+                                    backStack.add(Route.KalkulatorWinRate)
                                 }
                             )
 
@@ -241,12 +241,13 @@ fun GameListScreen(
                                 }
                             )
 
+                            // ✅ Cek Transaksi — navigasi ke screen baru
                             NexusMenuItem(
-                                icon    = Icons.Rounded.Search,
+                                icon    = Icons.Rounded.Receipt,
                                 label   = "Cek Transaksi",
                                 onClick = {
                                     showDropdownMenu = false
-                                    // TODO: navigasi ke halaman transaksi
+                                    backStack.add(Route.CekTransaksi)
                                 }
                             )
 

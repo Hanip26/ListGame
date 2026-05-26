@@ -18,6 +18,8 @@ import com.example.listgame.ui.screen.*
 import com.example.listgame.ui.theme.ListgameTheme
 import com.example.listgame.viewmodel.AppViewModel
 import com.example.listgame.viewmodel.AuthViewModel
+import com.example.listgame.ui.screen.CekTransaksiScreen
+import com.example.listgame.ui.screen.KalkulatorWinRateScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 class MainActivity : ComponentActivity() {
@@ -61,7 +63,14 @@ class MainActivity : ComponentActivity() {
                                 label       = "NexusNavigation"
                             ) { currentRoute ->
                                 when (currentRoute) {
+                                    is Route.CekTransaksi -> {
+                                        CekTransaksiScreen(appViewModel = appViewModel)
+                                    }
 
+                                    is Route.KalkulatorWinRate -> {
+                                        KalkulatorWinRateScreen()
+                                    }
+                                    // ── Auth ──────────────────────────────
                                     is Route.Login -> {
                                         LoginScreen(
                                             viewModel            = authViewModel,
@@ -77,10 +86,13 @@ class MainActivity : ComponentActivity() {
                                     is Route.Register -> {
                                         RegisterScreen(
                                             viewModel         = authViewModel,
-                                            onRegisterSuccess = { username ->
-                                                appViewModel.setActiveUser(username)
+                                            onRegisterSuccess = { displayName ->
+                                                // BUG FIX: setelah register, arahkan ke Login
+                                                // (bukan Home) agar user login manual sehingga
+                                                // sesi DataStore diinisialisasi dengan benar.
+                                                authViewModel.setRegisterSuccessMessage(displayName)
                                                 backStack.clear()
-                                                backStack.add(Route.Home(username))
+                                                backStack.add(Route.Login)
                                             },
                                             onNavigateBack = { backStack.removeLastOrNull() }
                                         )
@@ -107,7 +119,8 @@ class MainActivity : ComponentActivity() {
 
                                     is Route.Dashboard -> {
                                         DashboardScreen(
-                                            viewModel           = authViewModel,
+                                            authViewModel       = authViewModel,
+                                            appViewModel        = appViewModel,
                                             onNavigateToProfile = { backStack.add(Route.Profile) },
                                             onLogout            = doLogout
                                         )
@@ -137,7 +150,10 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     is Route.PaymentProgress -> {
-                                        PaymentProgressScreen(route = currentRoute)
+                                        PaymentProgressScreen(
+                                            route        = currentRoute,
+                                            appViewModel = appViewModel
+                                        )
                                     }
 
                                     null -> {}
