@@ -51,7 +51,7 @@ class UserRepository(private val dataStore: AppDataStore) {
 
     suspend fun logout() = dataStore.clearLoginSession()
 
-    // ── Profil ────────────────────────────────────────────────────────────────
+
     suspend fun updateProfile(
         username   : String,
         displayName: String,
@@ -60,7 +60,6 @@ class UserRepository(private val dataStore: AppDataStore) {
         bio        : String
     ): UpdateProfileResult = dataStore.updateUserProfile(username, displayName, email, phone, bio)
 
-    // ── Password ──────────────────────────────────────────────────────────────
     suspend fun changePassword(
         username       : String,
         currentPassword: String,

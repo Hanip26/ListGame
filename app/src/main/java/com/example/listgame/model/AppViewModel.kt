@@ -13,7 +13,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dataStore = AppDataStore(application)
 
-    // ── State global ──────────────────────────────────────────────────────────
     val sortOption: StateFlow<String> = dataStore.sortOptionFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "A-Z")
 

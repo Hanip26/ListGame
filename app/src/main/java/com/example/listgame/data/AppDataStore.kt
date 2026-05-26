@@ -34,7 +34,6 @@ object PreferencesKeys {
 
 class AppDataStore(private val context: Context) {
 
-    // ── Favorit per akun ──────────────────────────────────────────────────────
     fun favoriteGamesFlow(username: String): Flow<List<Int>> =
         context.dataStore.data
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
@@ -60,7 +59,6 @@ class AppDataStore(private val context: Context) {
         }
     }
 
-    // ── Global ────────────────────────────────────────────────────────────────
     val sortOptionFlow: Flow<String> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs -> prefs[PreferencesKeys.SORT_OPTION] ?: "A-Z" }
@@ -85,7 +83,6 @@ class AppDataStore(private val context: Context) {
         context.dataStore.edit { it[PreferencesKeys.IS_DARK_THEME] = isDark }
     }
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
     val registeredUsersFlow: Flow<List<User>> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs ->
@@ -124,7 +121,6 @@ class AppDataStore(private val context: Context) {
         return result
     }
 
-    // ── UPDATE profil user (nama, email, phone, bio) ──────────────────────────
     suspend fun updateUserProfile(
         username   : String,
         displayName: String,
@@ -143,7 +139,6 @@ class AppDataStore(private val context: Context) {
             val idx = list.indexOfFirst { it.username.equals(username, ignoreCase = true) }
             if (idx == -1) { result = UpdateProfileResult.UserNotFound; return@edit }
 
-            // Cek apakah email sudah dipakai akun LAIN
             val emailTaken = list.any {
                 !it.username.equals(username, ignoreCase = true) &&
                         it.email.equals(email, ignoreCase = true)
@@ -161,7 +156,6 @@ class AppDataStore(private val context: Context) {
         return result
     }
 
-    // ── UPDATE password ───────────────────────────────────────────────────────
     suspend fun updatePassword(
         username       : String,
         currentHash    : String,
@@ -226,7 +220,6 @@ class AppDataStore(private val context: Context) {
     }
 }
 
-// ── Result types ──────────────────────────────────────────────────────────────
 sealed class RegisterResult {
     object Success       : RegisterResult()
     object UsernameTaken : RegisterResult()
