@@ -34,9 +34,10 @@ fun LoginScreen(
     onLoginSuccess: (String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    val state          by viewModel.loginState.collectAsState()
-    val keyboardCtrl   = LocalSoftwareKeyboardController.current
-    val focusManager   = LocalFocusManager.current
+    val state              by viewModel.loginState.collectAsState()
+    val keyboardCtrl       = LocalSoftwareKeyboardController.current
+    val focusManager       = LocalFocusManager.current
+    val snackbarHostState  = remember { SnackbarHostState() }
 
     // ── Tangkap one-shot event navigasi ──────────────────────────────────────
     LaunchedEffect(Unit) {
@@ -47,7 +48,19 @@ fun LoginScreen(
         }
     }
 
-    Scaffold { innerPadding ->
+    // ── Snackbar: pesan sukses setelah register ───────────────────────────────
+    // Dibaca dari state (bukan event) agar tidak hilang saat recompose
+    val regMsg = state.registerSuccessMessage
+    LaunchedEffect(regMsg) {
+        if (!regMsg.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(regMsg)
+            viewModel.clearRegisterSuccessMessage()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,7 +103,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text      = "Selamat Datang \nBersiaplah untuk Menjelajahi Dunia Game",
+                text      = "Masuk ke akunmu",
                 style     = MaterialTheme.typography.bodyMedium,
                 color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

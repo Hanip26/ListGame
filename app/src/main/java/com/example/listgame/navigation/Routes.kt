@@ -4,10 +4,12 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 
 sealed class Route {
-    object Login     : Route()
-    object Register  : Route()
-    object Profile   : Route()   // ← BARU
-    object Dashboard : Route()   // ← BARU
+    object Login           : Route()
+    object Register        : Route()
+    object Profile         : Route()
+    object Dashboard       : Route()
+    object CekTransaksi    : Route()   // ✅ BARU
+    object KalkulatorWinRate : Route() // ✅ BARU
 
     data class Home(val username: String) : Route()
     data class Detail(val gameId: Int)    : Route()

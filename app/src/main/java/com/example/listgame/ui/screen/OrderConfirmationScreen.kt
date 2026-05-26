@@ -1,6 +1,7 @@
 package com.example.listgame.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,8 +27,8 @@ import com.example.listgame.navigation.Route
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
-    val backStack = LocalBackStack.current
-    val game      = DummyData.popularGames.find { it.id == route.gameId }
+    val backStack     = LocalBackStack.current
+    val game          = DummyData.popularGames.find { it.id == route.gameId }
     var agreedToTerms by remember { mutableStateOf(false) }
 
     fun formatRp(value: Int) = "Rp ${"%,d".format(value).replace(',', '.')}"
@@ -54,45 +55,36 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                         .padding(horizontal = 20.dp, vertical = 14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // ✅ Checkbox S&K — rapi satu baris dengan wrap
+                    // ── Checkbox S&K ──────────────────────────────────────
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier          = Modifier.fillMaxWidth()
                     ) {
                         Checkbox(
-                            checked = agreedToTerms,
+                            checked         = agreedToTerms,
                             onCheckedChange = { agreedToTerms = it },
-                            colors = CheckboxDefaults.colors(
+                            colors          = CheckboxDefaults.colors(
                                 checkedColor = Color(0xFFFF6B00)
                             )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        // Gunakan Text tunggal dengan AnnotatedString agar tidak terpotong
-                        androidx.compose.ui.text.buildAnnotatedString {
-                            append("Dengan mengklik ")
-                        }.let {
-                            Text(
-                                buildString {
-                                    append("Dengan mengklik Pesan Sekarang, kamu sudah menyetujui Syarat & Ketentuan yang berlaku.")
-                                },
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 16.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                        Text(
+                            text      = "Dengan mengklik Pesan Sekarang, kamu sudah menyetujui Syarat & Ketentuan yang berlaku.",
+                            fontSize  = 11.sp,
+                            color     = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 16.sp,
+                            modifier  = Modifier.weight(1f)
+                        )
                     }
 
-                    // Tombol aksi
+                    // ── Tombol aksi ───────────────────────────────────────
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedButton(
                             onClick  = { backStack.removeLastOrNull() },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(52.dp),
+                            modifier = Modifier.weight(1f).height(52.dp),
                             shape    = RoundedCornerShape(14.dp)
                         ) {
                             Text("Batalkan", fontWeight = FontWeight.Bold)
@@ -104,8 +96,8 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                                     backStack.add(
                                         Route.PaymentProgress(
                                             gameId      = route.gameId,
-                                            username    = route.username,    // ✅
-                                            playerId    = route.playerId,    // ✅
+                                            username    = route.username,
+                                            playerId    = route.playerId,
                                             amount      = route.amount,
                                             quantity    = route.quantity,
                                             paymentName = route.paymentName,
@@ -117,19 +109,19 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                                 }
                             },
                             enabled  = agreedToTerms,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(52.dp),
+                            modifier = Modifier.weight(1f).height(52.dp),
                             shape    = RoundedCornerShape(14.dp),
                             colors   = ButtonDefaults.buttonColors(
                                 containerColor         = Color(0xFFFF6B00),
                                 disabledContainerColor = Color(0xFFFF6B00).copy(alpha = 0.38f)
                             )
                         ) {
-                            Text("Pesan Sekarang!",
+                            Text(
+                                "Pesan Sekarang!",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 14.sp)
+                                color      = Color.White,
+                                fontSize   = 14.sp
+                            )
                         }
                     }
                 }
@@ -145,6 +137,7 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+
             // ── Ikon centang hijau ────────────────────────────────────────
             Box(
                 modifier = Modifier
@@ -153,9 +146,11 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                     .background(Color(0xFF4CAF50)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Rounded.Check, null,
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp))
+                Icon(
+                    Icons.Rounded.Check, null,
+                    tint     = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
             }
 
             // ── Judul & Subjudul ──────────────────────────────────────────
@@ -163,13 +158,15 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text("Buat Pesanan",
+                Text(
+                    "Buat Pesanan",
                     fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.headlineSmall)
+                    style      = MaterialTheme.typography.headlineSmall
+                )
                 Text(
                     "Pastikan data akun Kamu dan produk yang Kamu pilih valid dan sesuai.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style     = MaterialTheme.typography.bodyMedium,
+                    color     = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
@@ -184,18 +181,23 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
                 Column {
-                    // ✅ Username & ID dipisah
                     ConfirmRow("Username", route.username)
                     ConfirmDivider()
                     ConfirmRow("ID", route.playerId)
                     ConfirmDivider()
                     ConfirmRow("Item", "${route.amount} (x${route.quantity})")
                     ConfirmDivider()
-                    ConfirmRow("Produk", game?.title ?: "-",
-                        valueWeight = FontWeight.Bold)
+                    ConfirmRow(
+                        label       = "Produk",
+                        value       = game?.title ?: "-",
+                        valueWeight = FontWeight.Bold
+                    )
                     ConfirmDivider()
-                    ConfirmRow("Payment", route.paymentName,
-                        valueWeight = FontWeight.Bold)
+                    ConfirmRow(
+                        label       = "Payment",
+                        value       = route.paymentName,
+                        valueWeight = FontWeight.Bold
+                    )
                     ConfirmDivider()
                     if (route.discountAmount > 0) {
                         ConfirmRow(
@@ -212,26 +214,29 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
                     )
                     ConfirmDivider()
 
-                    // ── Total — baris khusus lebih menonjol ──────────────
+                    // ── Total ─────────────────────────────────────────────
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Text("Total",
+                        Text(
+                            "Total",
                             fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.titleMedium)
-                        Text(formatRp(route.totalPrice),
+                            style      = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            formatRp(route.totalPrice),
                             fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFFFF6B00))
+                            style      = MaterialTheme.typography.titleMedium,
+                            color      = Color(0xFFFF6B00)
+                        )
                     }
                 }
             }
 
-            // Spacer supaya konten tidak tertutup bottomBar
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
@@ -243,7 +248,7 @@ fun OrderConfirmationScreen(route: Route.OrderConfirmation) {
 fun ConfirmRow(
     label: String,
     value: String,
-    valueColor: Color = Color.Unspecified,
+    valueColor: Color   = Color.Unspecified,
     valueWeight: FontWeight = FontWeight.Normal
 ) {
     Row(
@@ -251,19 +256,23 @@ fun ConfirmRow(
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment     = Alignment.CenterVertically
     ) {
-        Text(label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f))
-        Text(value,
-            style = MaterialTheme.typography.bodyMedium,
+        Text(
+            label,
+            style    = MaterialTheme.typography.bodyMedium,
+            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            value,
+            style      = MaterialTheme.typography.bodyMedium,
             fontWeight = valueWeight,
-            color = if (valueColor == Color.Unspecified)
+            color      = if (valueColor == Color.Unspecified)
                 MaterialTheme.colorScheme.onSurface else valueColor,
-            textAlign = TextAlign.End,
-            modifier = Modifier.weight(1.5f))
+            textAlign  = TextAlign.End,
+            modifier   = Modifier.weight(1.5f)
+        )
     }
 }
 

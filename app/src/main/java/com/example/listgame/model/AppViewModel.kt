@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.listgame.data.AppDataStore
+import com.example.listgame.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,22 +23,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkThemeFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    // ── Favorit per-akun ──────────────────────────────────────────────────────
-    // activeUsername di-set oleh MainActivity setiap kali ada login/logout.
-    // FlatMapLatest memastikan Flow favorit langsung berganti saat username ganti
-    // — tidak perlu restart app.
+    // ── Active user (set saat login/logout) ───────────────────────────────────
     private val _activeUsername = MutableStateFlow("")
 
-    /** Dipanggil MainActivity setiap kali user login atau logout. */
     fun setActiveUser(username: String) {
         _activeUsername.value = username
     }
 
+    // ── Favorit per-akun (flatMapLatest → berganti otomatis saat user ganti) ──
     @OptIn(ExperimentalCoroutinesApi::class)
     val favoriteGames: StateFlow<List<Int>> = _activeUsername
         .flatMapLatest { username ->
             if (username.isBlank()) flowOf(emptyList())
             else dataStore.favoriteGamesFlow(username)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Transaksi per-akun ────────────────────────────────────────────────────
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val transactions: StateFlow<List<Transaction>> = _activeUsername
+        .flatMapLatest { username ->
+            if (username.isBlank()) flowOf(emptyList())
+            else dataStore.transactionsFlow(username)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -53,6 +60,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val username = _activeUsername.value
         if (username.isBlank()) return
         viewModelScope.launch { dataStore.clearFavorites(username) }
+    }
+
+    fun addTransaction(transaction: Transaction) {
+        val username = _activeUsername.value
+        if (username.isBlank()) return
+        viewModelScope.launch { dataStore.addTransaction(username, transaction) }
     }
 
     fun saveSortOption(option: String) {

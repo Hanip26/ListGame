@@ -40,7 +40,9 @@ fun RegisterScreen(
     LaunchedEffect(Unit) {
         viewModel.authEvent.collect { event ->
             if (event is AuthEvent.RegisterSuccess) {
-                onRegisterSuccess(event.username)
+                // RegisterSuccess membawa displayName (bukan username)
+                // setelah register, MainActivity mengarahkan ke Login
+                onRegisterSuccess(event.displayName)
             }
         }
     }

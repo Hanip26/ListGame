@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.listgame.model.Transaction
+import com.example.listgame.model.TransactionStatus
 import com.example.listgame.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -24,6 +26,10 @@ object PreferencesKeys {
 
     fun favoriteGamesKey(username: String) =
         stringPreferencesKey("favorite_games_${username.lowercase()}")
+
+    // Per-akun: riwayat transaksi
+    fun transactionsKey(username: String) =
+        stringPreferencesKey("transactions_${username.lowercase()}")
 }
 
 class AppDataStore(private val context: Context) {
@@ -194,6 +200,28 @@ class AppDataStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.IS_LOGGED_IN]       = false
             prefs[PreferencesKeys.LOGGED_IN_USERNAME] = ""
+        }
+    }
+
+    // ── Transaksi per akun ────────────────────────────────────────────────────
+    fun transactionsFlow(username: String): Flow<List<Transaction>> =
+        context.dataStore.data
+            .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+            .map { prefs ->
+                val json = prefs[PreferencesKeys.transactionsKey(username)] ?: "[]"
+                try { Json.decodeFromString<List<Transaction>>(json) } catch (e: Exception) { emptyList() }
+            }
+
+    suspend fun addTransaction(username: String, transaction: Transaction) {
+        context.dataStore.edit { prefs ->
+            val key  = PreferencesKeys.transactionsKey(username)
+            val list = try {
+                Json.decodeFromString<MutableList<Transaction>>(prefs[key] ?: "[]")
+            } catch (e: Exception) { mutableListOf() }
+            // Simpan paling baru di depan, max 50 entri
+            list.add(0, transaction)
+            if (list.size > 50) list.subList(50, list.size).clear()
+            prefs[key] = Json.encodeToString(list)
         }
     }
 }
