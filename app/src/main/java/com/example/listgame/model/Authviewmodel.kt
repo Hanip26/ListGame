@@ -1,17 +1,17 @@
 package com.example.listgame.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.listgame.data.AppDataStore
 import com.example.listgame.data.ChangePasswordResult
 import com.example.listgame.data.LoginResult
 import com.example.listgame.data.RegisterResult
 import com.example.listgame.data.UpdateProfileResult
 import com.example.listgame.data.UserRepository
 import com.example.listgame.model.User
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // ── UI States ─────────────────────────────────────────────────────────────────
 data class LoginUiState(
@@ -66,9 +66,10 @@ sealed class AuthEvent {
     data class RegisterSuccess(val displayName: String) : AuthEvent()
 }
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = UserRepository(AppDataStore(application))
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
 
     private val _loginState    = MutableStateFlow(LoginUiState())
     val loginState: StateFlow<LoginUiState> = _loginState.asStateFlow()
@@ -161,8 +162,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 RegisterResult.Success -> {
                     val name = s.displayName.trim()
                     _registerState.value = RegisterUiState()
-                    // Tidak auto-login; minta user masuk manual
-                    // agar sesi DataStore selalu diinisialisasi lewat submitLogin()
                     _authEvent.emit(AuthEvent.RegisterSuccess(name))
                 }
                 RegisterResult.UsernameTaken ->

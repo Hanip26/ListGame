@@ -72,7 +72,7 @@ fun PaymentProgressScreen(
         delay(800L)
         currentStep = TxStep.PAYMENT
 
-        delay(30_000L)   // 2 menit menunggu bayar
+        delay(5_000L)   // 2 menit menunggu bayar
 
         currentStep = TxStep.PROCESSING
         delay(3_000L)
