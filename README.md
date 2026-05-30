@@ -508,6 +508,9 @@ https://youtube.com/shorts/d-tUgYyTO3c
 4. Pertemuan 9  
 https://youtube.com/shorts/TkFYY_ZmT7k
 
+5. Pertemuan 10
+https://youtube.com/shorts/3sYgIvGM6ds?si=8cCZ4adF4pMc62tU
+
 ---
 
 <p align="center">
