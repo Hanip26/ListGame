@@ -1,7 +1,7 @@
 # 🎮 ListGame — Popular Games Top Up App
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the-badge&logo=android&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=for-the- badge&logo=android&logoColor=white"/>
   <img src="https://img.shields.io/badge/Language-Kotlin-blueviolet?style=for-the-badge&logo=kotlin&logoColor=white"/>
   <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
   <img src="https://img.shields.io/badge/Architecture-MVVM-orange?style=for-the-badge"/>
