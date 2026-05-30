@@ -1,17 +1,19 @@
 package com.example.listgame.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.listgame.data.AppDataStore
 import com.example.listgame.model.Transaction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AppViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val dataStore = AppDataStore(application)
+@HiltViewModel
+class AppViewModel @Inject constructor(
+    private val dataStore: AppDataStore
+) : ViewModel() {
 
     val sortOption: StateFlow<String> = dataStore.sortOptionFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "A-Z")

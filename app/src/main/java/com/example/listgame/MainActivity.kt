@@ -20,7 +20,9 @@ import com.example.listgame.viewmodel.AppViewModel
 import com.example.listgame.viewmodel.AuthViewModel
 import com.example.listgame.ui.screen.CekTransaksiScreen
 import com.example.listgame.ui.screen.KalkulatorWinRateScreen
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 @OptIn(ExperimentalSharedTransitionApi::class)
 class MainActivity : ComponentActivity() {
 
@@ -87,9 +89,6 @@ class MainActivity : ComponentActivity() {
                                         RegisterScreen(
                                             viewModel         = authViewModel,
                                             onRegisterSuccess = { displayName ->
-                                                // BUG FIX: setelah register, arahkan ke Login
-                                                // (bukan Home) agar user login manual sehingga
-                                                // sesi DataStore diinisialisasi dengan benar.
                                                 authViewModel.setRegisterSuccessMessage(displayName)
                                                 backStack.clear()
                                                 backStack.add(Route.Login)
