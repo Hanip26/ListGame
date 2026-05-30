@@ -17,7 +17,7 @@
 
 ---
 
-## 📱 Tentang Aplikasi
+## 📱 Tentang Aplikasi 
 
 ListGame adalah aplikasi Android Native yang dikembangkan sebagai bagian dari praktikum **Pengembangan Aplikasi Bergerak (PAB)**.
 
