@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ── UI States ─────────────────────────────────────────────────────────────────
 data class LoginUiState(
     val usernameOrEmail      : String  = "",
     val password             : String  = "",
@@ -44,7 +43,6 @@ data class ProfileUiState(
     val email            : String  = "",
     val phone            : String  = "",
     val bio              : String  = "",
-    // ubah password
     val currentPassword  : String  = "",
     val newPassword      : String  = "",
     val confirmNewPassword: String = "",
@@ -59,7 +57,6 @@ data class ProfileUiState(
     val emailError       : String? = null,
 )
 
-// ── Events ────────────────────────────────────────────────────────────────────
 sealed class AuthEvent {
     data class LoginSuccess(val username: String)    : AuthEvent()
     // registerSuccessMessage = pesan yang ditampilkan di LoginScreen sebagai snackbar
@@ -89,13 +86,9 @@ class AuthViewModel @Inject constructor(
     val loggedInUsername: StateFlow<String> = repository.loggedInUsername
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
-    // Data user aktif — dipakai ProfileScreen & DashboardScreen
     val currentUser: StateFlow<User?> = repository.currentUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // =========================================================================
-    // Login
-    // =========================================================================
     fun onLoginUsernameChange(v: String) =
         _loginState.update { it.copy(usernameOrEmail = v, errorMessage = null) }
     fun onLoginPasswordChange(v: String) =
@@ -133,9 +126,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // =========================================================================
-    // Register
-    // =========================================================================
     fun onRegisterUsernameChange(v: String)     = _registerState.update { it.copy(username = v, usernameError = null) }
     fun onRegisterEmailChange(v: String)         = _registerState.update { it.copy(email = v, emailError = null) }
     fun onRegisterDisplayNameChange(v: String)   = _registerState.update { it.copy(displayName = v, displayNameError = null) }
@@ -172,11 +162,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // =========================================================================
-    // Profil — inisialisasi field dari data user saat ini
-    // =========================================================================
 
-    /** Dipanggil ProfileScreen saat pertama kali tampil. */
     fun initProfileForm(user: User) {
         _profileState.update {
             it.copy(
@@ -222,7 +208,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ── Ubah password ─────────────────────────────────────────────────────────
     fun onCurrentPasswordChange(v: String) =
         _profileState.update { it.copy(currentPassword = v, passwordError = null, passwordSuccess = null) }
     fun onNewPasswordChange(v: String) =
@@ -267,6 +252,5 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ── Logout ────────────────────────────────────────────────────────────────
     fun logout() { viewModelScope.launch { repository.logout() } }
 }

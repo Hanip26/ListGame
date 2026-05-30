@@ -10,6 +10,10 @@ sealed class Route {
     object Dashboard       : Route()
     object CekTransaksi    : Route()   // ✅ BARU
     object KalkulatorWinRate : Route() // ✅ BARU
+    object Login     : Route()
+    object Register  : Route()
+    object Profile   : Route()
+    object Dashboard : Route()
 
     data class Home(val username: String) : Route()
     data class Detail(val gameId: Int)    : Route()
