@@ -39,6 +39,45 @@ Aplikasi ini memungkinkan pengguna untuk:
 
 ---
 
+# 📚 Implementasi Materi Perkuliahan PPAB
+
+Pengembangan aplikasi **ListGame** dilakukan secara bertahap sesuai dengan materi yang dipelajari pada Praktikum Pengembangan Aplikasi Bergerak (PPAB). Setiap pertemuan memberikan kontribusi terhadap fitur dan teknologi yang digunakan dalam aplikasi ini.
+
+| Pertemuan | Materi | Fungsi Materi | Implementasi pada Aplikasi |
+|----------|---------|---------|---------|
+| **Week 01** | Pengenalan Android Studio & Kotlin | Memahami lingkungan pengembangan Android dan dasar bahasa Kotlin. | Menjadi fondasi dalam pembangunan aplikasi Android Native menggunakan Kotlin. |
+| **Week 02** | Dasar Pemrograman Kotlin | Mempelajari variabel, fungsi, percabangan, perulangan, dan collection. | Digunakan pada logika aplikasi seperti validasi login, filtering game, sorting game, dan perhitungan promo top up. |
+| **Week 03** | Object Oriented Programming (OOP) | Memahami konsep class, object, encapsulation, inheritance, dan abstraction. | Digunakan pada model data seperti `Game.kt`, `User.kt`, ViewModel, dan Repository. |
+| **Week 04** | Pembuatan User Interface Android | Mempelajari komponen UI dan penyusunan tampilan aplikasi. | Digunakan pada Login Screen, Register Screen, Dashboard Screen, dan komponen antarmuka lainnya. |
+| **Week 05** | Layout dan Interaksi Pengguna | Mempelajari event handling dan interaksi pengguna dengan aplikasi. | Implementasi form login, register, tombol navigasi, validasi input, dan interaksi pengguna. |
+| **Week 06** | Jetpack Compose | Mempelajari framework UI modern Android berbasis declarative programming. | Seluruh tampilan aplikasi dibangun menggunakan Jetpack Compose dan Material 3. |
+| **Week 07** | State Management & Navigation | Memahami pengelolaan state dan perpindahan halaman aplikasi. | Digunakan pada sistem navigasi antar halaman, wishlist, dan pengelolaan state aplikasi. |
+| **Week 09** | Authentication & Data Persistence | Mempelajari autentikasi pengguna dan penyimpanan data lokal. | Implementasi Login, Register, Logout, Session Login, dan DataStore Preferences. |
+| **Week 10** | Arsitektur Modern Android (MVVM) | Memahami pemisahan tanggung jawab antara UI dan Business Logic. | Implementasi MVVM Architecture menggunakan ViewModel, Repository, dan DataStore. |
+
+### 🎯 Capaian Pembelajaran
+
+Melalui pengembangan aplikasi **ListGame**, berbagai konsep yang dipelajari selama perkuliahan berhasil diimplementasikan secara nyata, meliputi:
+
+- ✅ Kotlin Programming
+- ✅ Android Native Development
+- ✅ Object Oriented Programming (OOP)
+- ✅ Jetpack Compose
+- ✅ Material Design 3
+- ✅ State Management
+- ✅ Navigation System
+- ✅ MVVM Architecture
+- ✅ Repository Pattern
+- ✅ Authentication System
+- ✅ Data Persistence menggunakan DataStore
+- ✅ Dynamic List menggunakan LazyColumn
+- ✅ Wishlist Management
+- ✅ Top Up Transaction System
+- ✅ Promo Code & Discount Calculation
+- ✅ Modern Android Development Practices
+
+---
+
 ## 🚀 Tech Stack
 
 1. 🟣 Kotlin (100%)
