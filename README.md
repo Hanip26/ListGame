@@ -494,7 +494,7 @@ Proyek ini dikembangkan untuk memenuhi tugas Praktikum **Pengembangan Aplikasi B
 
 ---
 
-## 🎬 Link Demo
+## 🎬 Link Video YouTube Penjelasan
 
 1. Pertemuan 4
 https://youtube.com/shorts/VuOMfvkpf8g
