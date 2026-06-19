@@ -32,7 +32,8 @@ import com.example.listgame.viewmodel.AuthViewModel
 fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: (String) -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val state              by viewModel.loginState.collectAsState()
     val keyboardCtrl       = LocalSoftwareKeyboardController.current
@@ -115,7 +116,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value         = state.usernameOrEmail,
                 onValueChange = viewModel::onLoginUsernameChange,
-                label         = { Text("Username atau Email") },
+                label         = { Text("Email") },
                 leadingIcon   = {
                     Icon(Icons.Rounded.Person, null,
                         tint = MaterialTheme.colorScheme.primary)
@@ -178,6 +179,24 @@ fun LoginScreen(
             )
 
             Spacer(Modifier.height(28.dp))
+
+            // ── Lupa Password — letakkan setelah OutlinedTextField password ──────────────
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onNavigateToForgotPassword) {
+                    Text(
+                        "Lupa Password?",
+                        fontWeight = FontWeight.SemiBold,
+                        color      = MaterialTheme.colorScheme.primary,
+                        fontSize   = 13.sp
+                    )
+                }
+            }
+
+// Spacer yang sudah ada tetap
+            Spacer(Modifier.height(12.dp))
 
             // ── Tombol Login ──────────────────────────────────────────────
             Button(

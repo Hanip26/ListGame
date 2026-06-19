@@ -1,5 +1,6 @@
 package com.example.listgame.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,24 +38,24 @@ import com.example.listgame.viewmodel.AuthViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-private val ColorWaiting  = Color(0xFFB5970B)
-private val ColorProcess  = Color(0xFF1565C0)
-private val ColorSuccess  = Color(0xFF2E7D32)
-private val ColorFailed   = Color(0xFF880E4F)
+private val ColorWaiting  = Color(0xFFD4AF37)
+private val ColorProcess  = Color(0xFF1976D2)
+private val ColorSuccess  = Color(0xFF388E3C)
+private val ColorFailed   = Color(0xFFC2185B)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     authViewModel      : AuthViewModel,
-    appViewModel       : AppViewModel,           // ← tambah untuk baca transaksi
+    appViewModel       : AppViewModel,
     onNavigateToProfile: () -> Unit,
     onLogout           : () -> Unit
 ) {
     val backStack    = LocalBackStack.current
     val user         by authViewModel.currentUser.collectAsState()
-    val transactions by appViewModel.transactions.collectAsState()   // ← Flow transaksi
+    val transactions     by appViewModel.transactions.collectAsState()
+    val nexusCoinBalance by appViewModel.nexusCoinBalance.collectAsState()
 
-    // Statistik dihitung dari data nyata
     val totalTrx      = transactions.size
     val totalRevenue  = transactions.filter { it.status == TransactionStatus.SUCCESS }
         .sumOf { it.totalPrice }
@@ -60,22 +64,63 @@ fun DashboardScreen(
     val countSuccess  = transactions.count { it.status == TransactionStatus.SUCCESS }
     val countFailed   = transactions.count { it.status == TransactionStatus.FAILED }
 
-    // Hanya tampilkan 5 transaksi terbaru di dashboard
     val recentTrx = transactions.take(5)
 
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showTierDialog by remember { mutableStateOf(false) }
 
-    if (showLogoutDialog) {
+    // ── LOGIKA PENENTUAN TIER DINAMIS ──
+    val userTier = when {
+        totalRevenue <= 100000 -> "Member Junior"
+        totalRevenue <= 500000 -> "Member Senior"
+        totalRevenue <= 1000000 -> "Member Terhormat"
+        totalRevenue <= 2000000 -> "Member Juragan"
+        else -> "Sultan Tier Member"
+    }
+
+    // ── LOGIKA PENENTUAN WARNA TIER DINAMIS ──
+    val userTierColor = when {
+        totalRevenue <= 100000 -> Color(0xFF00E676)    // Hijau Terang
+        totalRevenue <= 500000 -> Color(0xFF00B0FF)    // Biru Terang
+        totalRevenue <= 1000000 -> Color(0xFFE040FB)   // Ungu kearah pink cerah
+        totalRevenue <= 2000000 -> Color(0xFFFF9100)   // Orange cerah
+        else -> Color(0xFFFF1744)                      // Merah menyala
+    }
+
+    if (showTierDialog) {
         AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title  = { Text("Konfirmasi Logout") },
-            text   = { Text("Yakin ingin keluar dari akun ini?") },
+            onDismissRequest = { showTierDialog = false },
             confirmButton = {
-                TextButton(onClick = { showLogoutDialog = false; onLogout() }) {
-                    Text("Keluar", color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = { showTierDialog = false }) {
+                    Text("Tutup", fontWeight = FontWeight.Bold)
                 }
             },
-            dismissButton = { TextButton(onClick = { showLogoutDialog = false }) { Text("Batal") } }
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.MilitaryTech, contentDescription = null, tint = userTierColor, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Tingkatan Loyalitas Member", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Total Pembelian Kamu Saat Ini:\nRp ${"%,d".format(totalRevenue).replace(',', '.')}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = userTierColor
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                    // Daftar tingkatan dari yang terbawah sampai teratas dengan warna barunya masing-masing
+                    TierItem(name = "1. Member Junior", range = "Rp 0 - Rp 100.000", isActive = userTier == "Member Junior", tierColor = Color(0xFF00E676))
+                    TierItem(name = "2. Member Senior", range = "Rp 100.000 - Rp 500.000", isActive = userTier == "Member Senior", tierColor = Color(0xFF00B0FF))
+                    TierItem(name = "3. Member Terhormat", range = "Rp 500.000 - Rp 1.000.000", isActive = userTier == "Member Terhormat", tierColor = Color(0xFFE040FB))
+                    TierItem(name = "4. Member Juragan", range = "Rp 1.000.000 - Rp 2.000.000", isActive = userTier == "Member Juragan", tierColor = Color(0xFFFF9100))
+                    TierItem(name = "5. Sultan Tier Member", range = "Di atas Rp 2.000.000", isActive = userTier == "Sultan Tier Member", tierColor = Color(0xFFFF1744))
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -84,17 +129,63 @@ fun DashboardScreen(
             TopAppBar(
                 title   = { Text("Dashboard", fontWeight = FontWeight.Bold) },
                 actions = {
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Rounded.AccountCircle, "Profil")
-                    }
-                    IconButton(onClick = { showLogoutDialog = true }) {
-                        Icon(Icons.AutoMirrored.Rounded.ExitToApp,
-                            tint = MaterialTheme.colorScheme.error,
-                            contentDescription = "Logout")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onNavigateToProfile() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.tertiary
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = (user?.displayName ?: "?").take(1).uppercase(),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp,
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = user?.displayName ?: "-",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = userTier,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = userTierColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 10.sp,
+                                modifier = Modifier.clickable { showTierDialog = true }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -102,52 +193,32 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            // ── Banner keamanan ───────────────────────────────────────────
-            Card(
-                shape  = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1565C0))
-            ) {
-                Row(
-                    modifier            = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment   = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Tingkatkan keamanan!",
-                            fontWeight = FontWeight.Bold, color = Color.White,
-                            style = MaterialTheme.typography.titleSmall)
-                        Text("Gunakan fitur keamanan agar akun kamu lebih aman.",
-                            color = Color.White.copy(alpha = 0.85f),
-                            style = MaterialTheme.typography.bodySmall)
-                    }
-                    Icon(Icons.Rounded.Security, null,
-                        tint = Color.White, modifier = Modifier.size(36.dp))
-                }
-            }
-
-            // ── Profil + Saldo ────────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Kartu profil
                 Card(
-                    modifier = Modifier.weight(1f),
-                    shape    = RoundedCornerShape(16.dp),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    shape    = RoundedCornerShape(20.dp),
                     colors   = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp).fillMaxHeight()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp).clip(CircleShape)
+                                    .size(42.dp).clip(CircleShape)
                                     .background(
                                         Brush.linearGradient(
                                             listOf(
@@ -160,7 +231,7 @@ fun DashboardScreen(
                             ) {
                                 Text((user?.displayName ?: "?").take(1).uppercase(),
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 20.sp, color = Color.White)
+                                    fontSize   = 18.sp, color = Color.White)
                             }
                             Spacer(Modifier.width(12.dp))
                             Column {
@@ -168,240 +239,285 @@ fun DashboardScreen(
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.titleSmall,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Surface(shape = RoundedCornerShape(4.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer) {
-                                    Text("Member",
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontWeight = FontWeight.Bold)
-                                }
+
+                                Text(
+                                    text = userTier,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = userTierColor,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { showTierDialog = true }
+                                )
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Email, null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(4.dp))
-                            Text(user?.email ?: "-",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Phone, null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(4.dp))
-                            Text(if (user?.phone.isNullOrBlank()) "---" else user!!.phone,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.weight(1f))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         OutlinedButton(onClick = onNavigateToProfile,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth()) {
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            modifier = Modifier.fillMaxWidth().height(36.dp)) {
                             Icon(Icons.Rounded.Edit, null, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(6.dp))
                             Text("Edit Profil", style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
 
-                // Kartu saldo
                 Card(
-                    modifier = Modifier.weight(1f),
-                    shape    = RoundedCornerShape(16.dp),
-                    colors   = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E))
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    shape    = RoundedCornerShape(20.dp),
+                    colors   = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp).fillMaxHeight()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Paid, null,
-                                tint = Color(0xFFFFA726), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Rounded.Stars, null,
+                                tint = Color(0xFFFFD700), modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("NEXUS Coins",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.White, fontWeight = FontWeight.Bold)
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.SemiBold)
                         }
-                        Spacer(Modifier.height(16.dp))
-                        Text("0", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFFFFA726))
-                        Text("NEXUS Coins",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f))
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            "%,d".format(nexusCoinBalance).replace(",", "."),
+                            fontSize = 28.sp, fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFFFFD700)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = {}, shape = RoundedCornerShape(8.dp),
+                            Button(
+                                onClick = { backStack.add(Route.NexusCoinTopUp) },
+                                shape   = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(0.dp),
                                 modifier = Modifier.weight(1f).height(36.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA726))
-                            ) { Text("Top Up", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black) }
-                            OutlinedButton(onClick = {}, shape = RoundedCornerShape(8.dp),
+                                colors  = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700))
+                            ) {
+                                Icon(Icons.Rounded.Add, null, modifier = Modifier.size(16.dp), tint = Color(0xFF1A1A2E))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Top Up", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
+                            }
+                            OutlinedButton(
+                                onClick = { backStack.add(Route.NexusCoinHistory) },
+                                shape   = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(0.dp),
                                 modifier = Modifier.weight(1f).height(36.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                            ) { Text("Redeem", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                                colors  = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+                            ) {
+                                Icon(Icons.Rounded.History, null, modifier = Modifier.size(14.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Riwayat", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
             }
 
-            // ── Statistik transaksi ───────────────────────────────────────
-            Text("Transaksi Hari Ini",
+            TopUpChartCard(transactions)
+
+            Text("Statistik Hari Ini",
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                StatCard(Modifier.weight(1f), "Total Transaksi", totalTrx.toString(),
+                    MaterialTheme.colorScheme.surface)
+                StatCard(Modifier.weight(1f), "Total Pembelian",
+                    "Rp ${"%,d".format(totalRevenue).replace(',', '.')}",
+                    MaterialTheme.colorScheme.surface)
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(Modifier.weight(1f), "Total Transaksi", totalTrx.toString(),
-                    MaterialTheme.colorScheme.surfaceVariant)
-                StatCard(Modifier.weight(1f), "Total Pendapatan",
-                    "Rp ${"%,d".format(totalRevenue).replace(',', '.')}",
-                    MaterialTheme.colorScheme.surfaceVariant)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
                 StatusCard(Modifier.weight(1f), countWaiting.toString(),  "Menunggu",     ColorWaiting)
-                StatusCard(Modifier.weight(1f), countProcess.toString(),  "Dalam Proses", ColorProcess)
+                StatusCard(Modifier.weight(1f), countProcess.toString(),  "Proses",       ColorProcess)
                 StatusCard(Modifier.weight(1f), countSuccess.toString(),  "Sukses",       ColorSuccess)
                 StatusCard(Modifier.weight(1f), countFailed.toString(),   "Gagal",        ColorFailed)
             }
 
-            // ── Riwayat Transaksi — DATA NYATA ────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
-                Text("Riwayat Transaksi Terbaru",
+                Text("Transaksi Terbaru",
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
                 if (transactions.size > 5) {
-                    TextButton(onClick = { /* TODO: halaman semua transaksi */ }) {
-                        Text("Lihat Semua", style = MaterialTheme.typography.labelMedium)
-                    }
+                    Text("Lihat Semua",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { /* TODO */ }.padding(4.dp))
                 }
             }
 
             Card(
-                shape  = RoundedCornerShape(16.dp),
+                shape  = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Header tabel
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = 12.dp, vertical = 10.dp)
-                    ) {
-                        listOf("Invoice", "Item", "Total", "Status").forEachIndexed { i, h ->
-                            Text(h,
-                                modifier   = Modifier.weight(if (i == 0) 1.6f else 1f),
-                                fontWeight = FontWeight.Bold,
-                                style      = MaterialTheme.typography.labelSmall,
-                                color      = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    HorizontalDivider()
-
+                Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     if (recentTrx.isEmpty()) {
-                        // Empty state
                         Column(
                             modifier            = Modifier.fillMaxWidth().padding(40.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(Icons.Rounded.BarChart, null,
-                                modifier = Modifier.size(52.dp),
-                                tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                            Spacer(Modifier.height(12.dp))
-                            Text("Data tidak ditemukan!",
+                            Icon(Icons.Rounded.Inbox, null,
+                                modifier = Modifier.size(64.dp),
+                                tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                            Spacer(Modifier.height(16.dp))
+                            Text("Belum Ada Transaksi",
                                 fontWeight = FontWeight.Bold,
-                                color      = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Belum ada transaksi yang tercatat.",
+                                color      = MaterialTheme.colorScheme.onSurface)
+                            Text("Transaksi terbarumu akan muncul di sini.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     } else {
-                        // Baris data transaksi
-                        recentTrx.forEach { trx ->
+                        recentTrx.forEachIndexed { index, trx ->
                             TransactionRow(trx)
-                            HorizontalDivider(thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant)
+                            if (index < recentTrx.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // ── Menu cepat ────────────────────────────────────────────────
-            Text("Menu", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+            Text("Menu Cepat", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.Games, "Game",
-                    MaterialTheme.colorScheme.primaryContainer) {
+                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.SportsEsports, "Game",
+                    MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary) {
                     backStack.removeLastOrNull()
                 }
-                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.Favorite, "Wishlist",
-                    MaterialTheme.colorScheme.secondaryContainer) {
+                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.FavoriteBorder, "Wishlist",
+                    MaterialTheme.colorScheme.surface, Color(0xFFE91E63)) {
                     backStack.removeLastOrNull()
                 }
-                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.Person, "Profil",
-                    MaterialTheme.colorScheme.tertiaryContainer) {
+                QuickMenuCard(Modifier.weight(1f), Icons.Rounded.PersonOutline, "Profil",
+                    MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.tertiary) {
                     onNavigateToProfile()
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
-// ── Baris transaksi ───────────────────────────────────────────────────────────
 @Composable
-private fun TransactionRow(trx: Transaction) {
-    val fmt = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
-    val dateStr = fmt.format(Date(trx.createdAt))
+private fun TierItem(name: String, range: String, isActive: Boolean, tierColor: Color) {
+    val backgroundColor = if (isActive) tierColor.copy(alpha = 0.15f) else Color.Transparent
+    val textColor = if (isActive) tierColor else MaterialTheme.colorScheme.onSurface
 
     Row(
-        modifier          = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1.6f)) {
-            Text(trx.invoiceId.take(14) + "…",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1)
+        Column {
+            Text(name, fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.SemiBold, color = textColor, fontSize = 14.sp)
+            Text(range, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (isActive) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = "Tier Aktif",
+                tint = tierColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TransactionRow(trx: Transaction) {
+    val fmt = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
+    val dateStr = fmt.format(Date(trx.createdAt))
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    Row(
+        modifier          = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1.5f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable {
+                        clipboardManager.setText(AnnotatedString(trx.invoiceId))
+                        Toast.makeText(context, "Invoice disalin!", Toast.LENGTH_SHORT).show()
+                    }
+                    .padding(vertical = 4.dp, horizontal = 2.dp)
+            ) {
+                Text(trx.invoiceId.take(10) + "…",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = "Salin Invoice",
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    modifier = Modifier.size(14.dp)
+                )
+            }
             Text(dateStr,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text(trx.item, modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Text("Rp ${"%,d".format(trx.totalPrice).replace(',','.')}",
-            modifier   = Modifier.weight(1f),
-            style      = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold)
-        // Badge status
+
+        Column(modifier = Modifier.weight(1.2f)) {
+            Text(trx.item,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Text("Rp ${"%,d".format(trx.totalPrice).replace(',','.')}",
+                style      = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
         val (badgeColor, badgeText) = when (trx.status) {
             TransactionStatus.PENDING    -> ColorWaiting to "Menunggu"
             TransactionStatus.PROCESSING -> ColorProcess to "Proses"
             TransactionStatus.SUCCESS    -> ColorSuccess to "Sukses"
             TransactionStatus.FAILED     -> ColorFailed  to "Gagal"
         }
-        Surface(shape  = RoundedCornerShape(6.dp),
-            color  = badgeColor.copy(alpha = 0.15f),
-            modifier = Modifier.weight(1f)) {
+
+        Box(
+            modifier = Modifier
+                .weight(0.9f)
+                .background(badgeColor.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
             Text(badgeText,
-                modifier   = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                 style      = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color      = badgeColor)
@@ -409,31 +525,114 @@ private fun TransactionRow(trx: Transaction) {
     }
 }
 
-// ── Helper composables ────────────────────────────────────────────────────────
+@Composable
+private fun TopUpChartCard(transactions: List<Transaction>) {
+    val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des")
+
+    val monthlyData = remember(transactions) {
+        val data = FloatArray(12) { 0f }
+        val cal = Calendar.getInstance()
+        transactions.filter { it.status == TransactionStatus.SUCCESS }.forEach {
+            cal.timeInMillis = it.createdAt
+            val m = cal.get(Calendar.MONTH)
+            data[m] += it.totalPrice.toFloat()
+        }
+        data
+    }
+
+    val maxVal = monthlyData.maxOrNull()?.takeIf { it > 0 } ?: 1f
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text("Grafik Transaksi Tahunan",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(24.dp))
+
+            Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    repeat(4) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                            thickness = 1.dp
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    monthlyData.forEachIndexed { index, value ->
+                        val heightRatio = value / maxVal
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.55f)
+                                    .fillMaxHeight(heightRatio.coerceAtLeast(0.08f))
+                                    .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colorScheme.primary,
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                            )
+                                        )
+                                    )
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(months[index],
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun StatCard(modifier: Modifier, label: String, value: String, bgColor: Color) {
-    Card(modifier = modifier, shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor)) {
-        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold,
+    Card(modifier = modifier, shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.Start) {
+            Text(label, style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Text(value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(label, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }
 
 @Composable
 private fun StatusCard(modifier: Modifier, value: String, label: String, color: Color) {
-    Card(modifier = modifier, shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = color)) {
-        Column(modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
+    Card(modifier = modifier, shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.08f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(modifier = Modifier.padding(vertical = 16.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-            Spacer(Modifier.height(4.dp))
+            Text(value, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = color)
+            Spacer(Modifier.height(6.dp))
             Text(label, style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.9f), textAlign = TextAlign.Center)
+                color = color, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         }
     }
 }
@@ -441,16 +640,23 @@ private fun StatusCard(modifier: Modifier, value: String, label: String, color: 
 @Composable
 private fun QuickMenuCard(
     modifier: Modifier, icon: ImageVector, label: String,
-    bgColor: Color, onClick: () -> Unit
+    bgColor: Color, iconColor: Color, onClick: () -> Unit
 ) {
-    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor)) {
+    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.height(6.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(iconColor.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, modifier = Modifier.size(24.dp), tint = iconColor)
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

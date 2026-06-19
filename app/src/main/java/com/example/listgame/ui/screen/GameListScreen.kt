@@ -33,10 +33,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.listgame.data.DummyData
 import com.example.listgame.model.Game
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.listgame.model.GameApiViewModel
+import com.example.listgame.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -58,7 +61,11 @@ fun GameListScreen(
     var searchQuery      by rememberSaveable { mutableStateOf("") }
     var isWishlistMode   by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf("Semua") }
-
+    val gameApiViewModel: GameApiViewModel = viewModel()
+    val apiGames by gameApiViewModel.games.collectAsState()
+    LaunchedEffect(Unit) {
+        gameApiViewModel.loadGames()
+    }
     val categories = listOf(
         "Semua", "MOBA", "Battle Royale", "RPG", "FPS", "Sandbox", "Deduksi sosial"
     )
@@ -71,9 +78,32 @@ fun GameListScreen(
 
     // ✅ State untuk DropdownMenu titik tiga
     var showDropdownMenu by remember { mutableStateOf(false) }
+    val games = apiGames.map { apiGame ->
 
+        Game(
+            id = apiGame.id,
+            title = apiGame.title,
+            developer = apiGame.developer,
+            description = apiGame.description,
+
+            rating = 4.5,
+            size = "-",
+            genres = listOf(apiGame.category),
+            latestUpdate = "-",
+
+            imageRes = when(apiGame.image_url){
+                "mlbb" -> R.drawable.mlbb
+                "ff" -> R.drawable.ff
+                "pubg" -> R.drawable.pubg
+                "genshin" -> R.drawable.gensin
+                else -> R.drawable.mlbb
+            },
+
+            topUpOptions = emptyList()
+        )
+    }
     // ── Filter & Sort ─────────────────────────────────────────────────────────
-    val filteredGames = DummyData.popularGames.filter { game ->
+    val filteredGames = games.filter { game ->
         val matchesSearch   = game.title.contains(searchQuery, ignoreCase = true)
         val matchesWishlist = if (isWishlistMode) favoriteGames.contains(game.id) else true
         val matchesCategory = if (selectedCategory == "Semua") true
@@ -285,7 +315,7 @@ fun GameListScreen(
                                 iconTint = Color(0xFFFFD700),
                                 onClick  = {
                                     showDropdownMenu = false
-                                    // TODO: navigasi ke halaman Nexus Coin
+                                    backStack.add(Route.NexusCoinHistory)
                                 }
                             )
 

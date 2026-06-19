@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.listgame.data.ResetPasswordResult
 
 data class LoginUiState(
     val usernameOrEmail      : String  = "",
@@ -38,6 +39,26 @@ data class RegisterUiState(
     val generalError     : String? = null,
 )
 
+// ── Tambah state baru untuk lupa password ────────────────────────────────────
+data class ForgotPasswordUiState(
+    val step              : ForgotPasswordStep = ForgotPasswordStep.INPUT_IDENTITY,
+    val usernameOrEmail   : String  = "",
+    val newPassword       : String  = "",
+    val confirmNewPassword: String  = "",
+    val isPasswordVisible : Boolean = false,
+    val isLoading         : Boolean = false,
+    val identityError     : String? = null,
+    val newPasswordError  : String? = null,
+    val confirmPassError  : String? = null,
+    val successMessage    : String? = null,
+)
+
+enum class ForgotPasswordStep {
+    INPUT_IDENTITY,  // Step 1: masukkan username/email
+    INPUT_NEW_PASS,  // Step 2: masukkan password baru
+    SUCCESS          // Step 3: berhasil
+}
+
 data class ProfileUiState(
     val displayName      : String  = "",
     val email            : String  = "",
@@ -59,8 +80,8 @@ data class ProfileUiState(
 
 sealed class AuthEvent {
     data class LoginSuccess(val username: String)    : AuthEvent()
-    // registerSuccessMessage = pesan yang ditampilkan di LoginScreen sebagai snackbar
     data class RegisterSuccess(val displayName: String) : AuthEvent()
+    object ForgotPasswordSuccess                        : AuthEvent()
 }
 
 @HiltViewModel
@@ -113,7 +134,7 @@ class AuthViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _loginState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val r = repository.login(s.usernameOrEmail, s.password)) {
+            when (val r = repository.loginApi(s.usernameOrEmail, s.password)) {
                 is LoginResult.Success -> {
                     _loginState.value = LoginUiState()
                     _authEvent.emit(AuthEvent.LoginSuccess(r.username))
@@ -148,7 +169,7 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             _registerState.update { it.copy(isLoading = true) }
-            when (repository.register(s.username, s.email, s.password, s.displayName)) {
+            when (repository.registerApi(s.username, s.email, s.password, s.displayName)) {
                 RegisterResult.Success -> {
                     val name = s.displayName.trim()
                     _registerState.value = RegisterUiState()
@@ -208,6 +229,104 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+<<<<<<< HEAD
+    // ── Forgot Password state ─────────────────────────────────────────────────────
+    private val _forgotState = MutableStateFlow(ForgotPasswordUiState())
+    val forgotState: StateFlow<ForgotPasswordUiState> = _forgotState.asStateFlow()
+
+    fun resetForgotForm() { _forgotState.value = ForgotPasswordUiState() }
+
+    fun onForgotIdentityChange(v: String) =
+        _forgotState.update { it.copy(usernameOrEmail = v, identityError = null) }
+
+    fun onForgotNewPasswordChange(v: String) =
+        _forgotState.update { it.copy(newPassword = v, newPasswordError = null) }
+
+    fun onForgotConfirmPasswordChange(v: String) =
+        _forgotState.update { it.copy(confirmNewPassword = v, confirmPassError = null) }
+
+    fun onForgotPasswordVisibilityToggle() =
+        _forgotState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+
+    // Step 1 — Verifikasi username/email
+    fun submitForgotIdentity() {
+        val s = _forgotState.value
+        if (s.usernameOrEmail.isBlank()) {
+            _forgotState.update {
+                it.copy(identityError = "Username atau email tidak boleh kosong.")
+            }
+            return
+        }
+        viewModelScope.launch {
+            _forgotState.update { it.copy(isLoading = true, identityError = null) }
+            // Cek apakah username/email terdaftar
+            val exists = repository.checkUserExists(s.usernameOrEmail)
+            if (exists) {
+                _forgotState.update {
+                    it.copy(
+                        isLoading = false,
+                        step      = ForgotPasswordStep.INPUT_NEW_PASS
+                    )
+                }
+            } else {
+                _forgotState.update {
+                    it.copy(
+                        isLoading    = false,
+                        identityError = "Akun dengan username/email tersebut tidak ditemukan."
+                    )
+                }
+            }
+        }
+    }
+
+    // Step 2 — Reset password
+    fun submitNewPassword() {
+        val s = _forgotState.value
+        var hasError = false
+
+        if (s.newPassword.length < 6) {
+            _forgotState.update {
+                it.copy(newPasswordError = "Password minimal 6 karakter.")
+            }
+            hasError = true
+        }
+        if (s.confirmNewPassword != s.newPassword) {
+            _forgotState.update {
+                it.copy(confirmPassError = "Konfirmasi password tidak cocok.")
+            }
+            hasError = true
+        }
+        if (hasError) return
+
+        viewModelScope.launch {
+            _forgotState.update { it.copy(isLoading = true) }
+            when (repository.resetPassword(s.usernameOrEmail, s.newPassword)) {
+                ResetPasswordResult.Success -> {
+                    _forgotState.update {
+                        it.copy(
+                            isLoading      = false,
+                            step           = ForgotPasswordStep.SUCCESS,
+                            successMessage = "Password berhasil direset! Silakan masuk."
+                        )
+                    }
+                    _authEvent.emit(AuthEvent.ForgotPasswordSuccess)
+                }
+                ResetPasswordResult.UserNotFound -> {
+                    _forgotState.update {
+                        it.copy(
+                            isLoading     = false,
+                            identityError = "Akun tidak ditemukan.",
+                            step          = ForgotPasswordStep.INPUT_IDENTITY
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Ubah password ─────────────────────────────────────────────────────────
+=======
+>>>>>>> origin/main
     fun onCurrentPasswordChange(v: String) =
         _profileState.update { it.copy(currentPassword = v, passwordError = null, passwordSuccess = null) }
     fun onNewPasswordChange(v: String) =

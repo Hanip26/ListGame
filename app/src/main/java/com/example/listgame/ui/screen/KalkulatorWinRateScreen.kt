@@ -46,22 +46,25 @@ fun KalkulatorWinRateScreen() {
         val tr = targetWinRate.toDoubleOrNull()
 
         when {
-            n == null || n <= 0         -> { errorMsg = "Total pertandingan harus angka positif."; return }
-            wr == null || wr < 0 || wr > 100 -> { errorMsg = "Win rate saat ini harus 0–100."; return }
-            tr == null || tr < 0 || tr > 100 -> { errorMsg = "Target win rate harus 0–100."; return }
-            tr <= wr                    -> { errorMsg = "Target win rate harus lebih tinggi dari saat ini."; return }
+            n == null || n <= 0 -> {
+                errorMsg = "Total pertandingan harus angka positif."
+                return
+            }
+            wr == null || wr < 0 || wr > 100 -> {
+                errorMsg = "Win rate saat ini harus 0–100."
+                return
+            }
+            tr == null || tr < 0 || tr > 100 -> {
+                errorMsg = "Target win rate harus 0–100."
+                return
+            }
+            tr <= wr -> {
+                errorMsg = "Target win rate harus lebih tinggi dari saat ini."
+                return
+            }
         }
 
-        // Rumus: wins_needed = ceil((tr/100 * (n + x) - wr/100 * n) / 1)
-        // dimana x adalah jumlah pertandingan tambahan dan semua menang
-        // Solve: tr/100 * (n + x) = wr/100 * n + x
-        // tr*(n+x) = wr*n + 100*x
-        // tr*n + tr*x = wr*n + 100*x
-        // tr*n - wr*n = 100*x - tr*x
-        // n*(tr-wr) = x*(100-tr)
-        // x = n*(tr-wr) / (100-tr)
-
-        val wins = n!! * wr!! / 100.0
+        val wins   = n!! * wr!! / 100.0
         val target = tr!!
 
         if (target >= 100.0) {
@@ -123,7 +126,9 @@ fun KalkulatorWinRateScreen() {
                         textAlign  = TextAlign.Center
                     )
                     Text(
-                        "Digunakan untuk menghitung total jumlah pertandingan yang harus diambil untuk mencapai target tingkat kemenangan yang diinginkan.",
+                        "Digunakan untuk menghitung total jumlah pertandingan " +
+                                "yang harus diambil untuk mencapai target tingkat " +
+                                "kemenangan yang diinginkan.",
                         style     = MaterialTheme.typography.bodySmall,
                         color     = Color.White.copy(alpha = 0.65f),
                         textAlign = TextAlign.Center,
@@ -134,7 +139,7 @@ fun KalkulatorWinRateScreen() {
 
             // ── Form Input ────────────────────────────────────────────────
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -142,41 +147,41 @@ fun KalkulatorWinRateScreen() {
 
                 // Input 1
                 WinRateInputField(
-                    label       = "Total Pertandingan Kamu Saat Ini",
-                    value       = totalMatch,
+                    label         = "Total Pertandingan Kamu Saat Ini",
+                    value         = totalMatch,
                     onValueChange = {
                         totalMatch = it
                         result     = null
                         errorMsg   = ""
                     },
-                    placeholder = "200"
+                    placeholder = "Pertandingan saat ini"
                 )
 
                 // Input 2
                 WinRateInputField(
-                    label       = "Total Win Rate Kamu Saat Ini",
-                    value       = currentWinRate,
+                    label         = "Total Win Rate Kamu Saat Ini",
+                    value         = currentWinRate,
                     onValueChange = {
                         currentWinRate = it
                         result         = null
                         errorMsg       = ""
                     },
-                    placeholder = "50"
+                    placeholder = "Menang yang ingin dicapai"
                 )
 
                 // Input 3
                 WinRateInputField(
-                    label       = "Win Rate Total yang Kamu Inginkan",
-                    value       = targetWinRate,
+                    label         = "Win Rate Total yang Kamu Inginkan",
+                    value         = targetWinRate,
                     onValueChange = {
                         targetWinRate = it
                         result        = null
                         errorMsg      = ""
                     },
-                    placeholder = "80"
+                    placeholder = "Winrate"
                 )
 
-                // Error message
+                // ── Pesan error ───────────────────────────────────────────
                 if (errorMsg.isNotEmpty()) {
                     Card(
                         shape  = RoundedCornerShape(10.dp),
@@ -185,13 +190,15 @@ fun KalkulatorWinRateScreen() {
                         )
                     ) {
                         Row(
-                            modifier  = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            modifier              = Modifier.padding(12.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Rounded.Warning, null,
+                            Icon(
+                                Icons.Rounded.Warning, null,
                                 tint     = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp))
+                                modifier = Modifier.size(18.dp)
+                            )
                             Text(
                                 errorMsg,
                                 style = MaterialTheme.typography.bodySmall,
@@ -201,65 +208,39 @@ fun KalkulatorWinRateScreen() {
                     }
                 }
 
-                // ── Tombol ────────────────────────────────────────────────
-                Row(
-                    modifier              = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // ✅ Tombol Hitung — tengah layar, tanpa Pesan Joki
+                Button(
+                    onClick  = { calculate() },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(0.6f)   // lebar 60% layar agar terkesan terpusat
+                        .height(52.dp),
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor         = Color(0xFFFF6B00),
+                        disabledContainerColor = Color(0xFFFF6B00).copy(alpha = 0.4f)
+                    ),
+                    enabled = totalMatch.isNotBlank() &&
+                            currentWinRate.isNotBlank() &&
+                            targetWinRate.isNotBlank()
                 ) {
-                    // Tombol Hitung
-                    Button(
-                        onClick  = { calculate() },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp),
-                        shape  = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF6B00)
-                        ),
-                        enabled = totalMatch.isNotBlank() &&
-                                currentWinRate.isNotBlank() &&
-                                targetWinRate.isNotBlank()
-                    ) {
-                        Icon(Icons.Rounded.Calculate, null,
-                            modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Hitung",
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 15.sp)
-                    }
-
-                    // Tombol Pesan Joki
-                    OutlinedButton(
-                        onClick  = {
-                            // TODO: navigasi ke halaman joki / whatsapp
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp),
-                        shape    = RoundedCornerShape(12.dp),
-                        colors   = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFFF6B00)
-                        ),
-                        border   = ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = Brush.linearGradient(
-                                colors = listOf(Color(0xFFFF6B00), Color(0xFFFF6B00))
-                            )
-                        )
-                    ) {
-                        Icon(Icons.Rounded.SportsEsports, null,
-                            modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Pesan Joki",
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 15.sp)
-                    }
+                    Icon(
+                        Icons.Rounded.Calculate, null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Hitung",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 16.sp
+                    )
                 }
 
                 // ── Hasil Kalkulasi ───────────────────────────────────────
                 if (result != null) {
                     val r = result!!
 
-                    // Box hasil — persis seperti gambar 3
+                    // Kotak hasil utama
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -267,46 +248,50 @@ fun KalkulatorWinRateScreen() {
                                 color = MaterialTheme.colorScheme.surfaceVariant,
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            .padding(vertical = 18.dp, horizontal = 20.dp),
+                            .padding(vertical = 20.dp, horizontal = 20.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = buildAnnotatedString {
-                                withStyle(SpanStyle(
-                                    color      = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 14.sp
-                                )) {
-                                    append("YOU NEED ABOUT ")
-                                }
-                                withStyle(SpanStyle(
-                                    color      = Color(0xFFFF6B00),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 14.sp
-                                )) {
-                                    append("${r.gamesNeeded} WIN WITHOUT LOSE")
-                                }
-                                withStyle(SpanStyle(
-                                    color      = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 14.sp
-                                )) {
-                                    append(" TO GET A ")
-                                }
-                                withStyle(SpanStyle(
-                                    color      = Color(0xFFFF6B00),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 14.sp
-                                )) {
-                                    append("${r.targetWr}% WIN RATE")
-                                }
-                                withStyle(SpanStyle(
-                                    color      = Color.White,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize   = 14.sp
-                                )) {
-                                    append(".")
-                                }
+                                withStyle(
+                                    SpanStyle(
+                                        color      = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize   = 14.sp
+                                    )
+                                ) { append("YOU NEED ABOUT ") }
+
+                                withStyle(
+                                    SpanStyle(
+                                        color      = Color(0xFFFF6B00),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize   = 14.sp
+                                    )
+                                ) { append("${r.gamesNeeded} WIN WITHOUT LOSE") }
+
+                                withStyle(
+                                    SpanStyle(
+                                        color      = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize   = 14.sp
+                                    )
+                                ) { append(" TO GET A ") }
+
+                                withStyle(
+                                    SpanStyle(
+                                        color      = Color(0xFFFF6B00),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize   = 14.sp
+                                    )
+                                ) { append("${r.targetWr}% WIN RATE") }
+
+                                withStyle(
+                                    SpanStyle(
+                                        color      = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize   = 14.sp
+                                    )
+                                ) { append(".") }
                             },
                             textAlign = TextAlign.Center
                         )
@@ -314,7 +299,7 @@ fun KalkulatorWinRateScreen() {
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Rincian tambahan
+                    // Rincian kalkulasi
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape    = RoundedCornerShape(12.dp),
@@ -326,18 +311,35 @@ fun KalkulatorWinRateScreen() {
                             modifier            = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Ringkasan Kalkulasi",
+                            Text(
+                                "Ringkasan Kalkulasi",
                                 fontWeight = FontWeight.Bold,
                                 style      = MaterialTheme.typography.labelLarge,
-                                color      = MaterialTheme.colorScheme.primary)
+                                color      = MaterialTheme.colorScheme.primary
+                            )
                             HorizontalDivider(
                                 color = MaterialTheme.colorScheme.outlineVariant
                             )
-                            WrDetailRow("Pertandingan saat ini",     "${totalMatch}")
-                            WrDetailRow("Win rate saat ini",         "${currentWinRate}%")
-                            WrDetailRow("Target win rate",           "${targetWinRate}%")
-                            WrDetailRow("Kemenangan beruntun dibutuhkan", "${r.gamesNeeded}")
-                            WrDetailRow("Total pertandingan setelah itu", "${r.totalAfter}")
+                            WrDetailRow(
+                                "Pertandingan saat ini",
+                                totalMatch
+                            )
+                            WrDetailRow(
+                                "Win rate saat ini",
+                                "$currentWinRate%"
+                            )
+                            WrDetailRow(
+                                "Target win rate",
+                                "$targetWinRate%"
+                            )
+                            WrDetailRow(
+                                "Kemenangan beruntun dibutuhkan",
+                                "${r.gamesNeeded}"
+                            )
+                            WrDetailRow(
+                                "Total pertandingan setelah itu",
+                                "${r.totalAfter}"
+                            )
                         }
                     }
                 }
@@ -357,14 +359,14 @@ private data class WinRateResult(
     val totalAfter  : Int
 )
 
-// ── Helper Composables ────────────────────────────────────────────────────────
+// ── Helper: Input Field ───────────────────────────────────────────────────────
 
 @Composable
 private fun WinRateInputField(
-    label: String,
-    value: String,
+    label        : String,
+    value        : String,
     onValueChange: (String) -> Unit,
-    placeholder: String
+    placeholder  : String
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -376,10 +378,13 @@ private fun WinRateInputField(
         OutlinedTextField(
             value         = value,
             onValueChange = onValueChange,
-            placeholder   = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            singleLine    = true,
-            modifier      = Modifier.fillMaxWidth(),
-            shape         = RoundedCornerShape(10.dp),
+            placeholder   = {
+                Text(placeholder,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            singleLine      = true,
+            modifier        = Modifier.fillMaxWidth(),
+            shape           = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number
             ),
@@ -389,6 +394,8 @@ private fun WinRateInputField(
         )
     }
 }
+
+// ── Helper: Baris Detail ──────────────────────────────────────────────────────
 
 @Composable
 private fun WrDetailRow(label: String, value: String) {
