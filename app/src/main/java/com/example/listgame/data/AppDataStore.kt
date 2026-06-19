@@ -42,7 +42,6 @@ object PreferencesKeys {
 
 class AppDataStore(private val context: Context) {
 
-    // ── Favorit per akun ──────────────────────────────────────────────────────
     fun favoriteGamesFlow(username: String): Flow<List<Int>> =
         context.dataStore.data
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
@@ -68,6 +67,7 @@ class AppDataStore(private val context: Context) {
         }
     }
 
+<<<<<<< HEAD
     // ── RESET password via email (untuk lupa password) ───────────────────────
     suspend fun resetPasswordByEmail(
         usernameOrEmail : String,
@@ -99,6 +99,8 @@ class AppDataStore(private val context: Context) {
     }
 
     // ── Global ────────────────────────────────────────────────────────────────
+=======
+>>>>>>> origin/main
     val sortOptionFlow: Flow<String> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs -> prefs[PreferencesKeys.SORT_OPTION] ?: "A-Z" }
@@ -123,7 +125,6 @@ class AppDataStore(private val context: Context) {
         context.dataStore.edit { it[PreferencesKeys.IS_DARK_THEME] = isDark }
     }
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
     val registeredUsersFlow: Flow<List<User>> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs ->
@@ -162,7 +163,6 @@ class AppDataStore(private val context: Context) {
         return result
     }
 
-    // ── UPDATE profil user (nama, email, phone, bio) ──────────────────────────
     suspend fun updateUserProfile(
         username   : String,
         displayName: String,
@@ -198,7 +198,6 @@ class AppDataStore(private val context: Context) {
         return result
     }
 
-    // ── UPDATE password ───────────────────────────────────────────────────────
     suspend fun updatePassword(
         username    : String,
         currentHash : String,
@@ -311,7 +310,6 @@ class AppDataStore(private val context: Context) {
     }
 }
 
-// ── Result types ──────────────────────────────────────────────────────────────
 sealed class RegisterResult {
     object Success       : RegisterResult()
     object UsernameTaken : RegisterResult()

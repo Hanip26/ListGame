@@ -51,14 +51,13 @@ class MainActivity : ComponentActivity() {
                 val favoriteGames by appViewModel.favoriteGames.collectAsState()
                 val sortOption    by appViewModel.sortOption.collectAsState()
 
-                // Helper logout terpusat — dipakai semua screen
+
                 val doLogout: () -> Unit = {
                     appViewModel.setActiveUser("")
                     authViewModel.logout()
                     backStack.clear()
                     backStack.add(Route.Login)
                 }
-
                 CompositionLocalProvider(LocalBackStack provides backStack) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -103,6 +102,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
+<<<<<<< HEAD
                                     is Route.ForgotPassword -> {
                                         ForgotPasswordScreen(
                                             viewModel      = authViewModel,
@@ -115,6 +115,8 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     // ── Home ──────────────────────────────
+=======
+>>>>>>> origin/main
                                     is Route.Home -> {
                                         LaunchedEffect(currentRoute.username) {
                                             appViewModel.setActiveUser(currentRoute.username)
@@ -134,7 +136,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Dashboard ─────────────────────────
                                     is Route.Dashboard -> {
                                         DashboardScreen(
                                             authViewModel       = authViewModel,
@@ -144,7 +145,10 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
+<<<<<<< HEAD
                                     // ── Profil (SUDAH DIPERBAIKI SINKRONISASINYA) ──
+=======
+>>>>>>> origin/main
                                     is Route.Profile -> {
                                         ProfileScreen(
                                             authViewModel = authViewModel,
@@ -153,7 +157,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Game detail & top up ──────────────
                                     is Route.Detail -> {
                                         GameDetailScreen(
                                             gameId                  = currentRoute.gameId,

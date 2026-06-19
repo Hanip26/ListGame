@@ -16,7 +16,6 @@ class AppViewModel @Inject constructor(
     private val dataStore: AppDataStore
 ) : ViewModel() {
 
-    // ── State global ──────────────────────────────────────────────────────────
     val sortOption: StateFlow<String> = dataStore.sortOptionFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "A-Z")
 
