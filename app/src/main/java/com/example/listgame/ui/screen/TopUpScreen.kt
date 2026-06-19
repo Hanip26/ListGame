@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -33,6 +34,7 @@ import com.example.listgame.data.DummyData
 import com.example.listgame.model.TopUpOption
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
+import com.example.listgame.viewmodel.AppViewModel
 
 // ── Data Classes ──────────────────────────────────────────────────────────────
 
@@ -40,7 +42,8 @@ data class PaymentMethod(
     val id: String,
     val name: String,
     val description: String,
-    val isBestPrice: Boolean = false
+    val isBestPrice: Boolean = false,
+    val isDisabled: Boolean = false
 )
 
 data class PaymentGroup(
@@ -59,9 +62,12 @@ val validPromoCodes = mapOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopUpScreen(gameId: Int) {
+fun TopUpScreen(gameId: Int, appViewModel: AppViewModel) {
     val backStack = LocalBackStack.current
     val game      = DummyData.popularGames.find { it.id == gameId }
+
+    // ── Saldo Nexus Coin (sinkron dengan halaman NEXUS Coins) ─────────────────
+    val nexusCoinBalance by appViewModel.nexusCoinBalance.collectAsState()
 
     // ── State Form ────────────────────────────────────────────────────────────
     var username        by remember { mutableStateOf("") }
@@ -84,13 +90,36 @@ fun TopUpScreen(gameId: Int) {
     var whatsappNumber by remember { mutableStateOf("") }
     var isWaError      by remember { mutableStateOf(false) }
 
+    // ── Kalkulasi Harga ───────────────────────────────────────────────────────
+    val basePrice      = selectedOption?.price
+        ?.replace("Rp ", "")?.replace(".", "")?.toIntOrNull() ?: 0
+    val subtotal       = basePrice * quantity
+    val discountAmount = (subtotal * promoDiscount) / 100
+    val adminFee       = if (selectedPayment?.id == "nexus_coin") 0 else 675
+    val totalPrice     = subtotal - discountAmount + adminFee
+
+    fun formatRp(value: Int) = "Rp ${"%,d".format(value).replace(',', '.')}"
+    fun formatCoin(value: Int) = "%,d".format(value).replace(',', '.')
+
+    // ── Cek Saldo Nexus Coin ──────────────────────────────────────────────────
+    // Jika bayar dengan Nexus Coin, biaya admin = 0, jadi total yang harus
+    // dipotong dari saldo adalah subtotal dikurangi diskon.
+    val nexusCoinRequiredAmount = subtotal - discountAmount
+    val hasEnoughNexusCoin = selectedOption == null ||
+            nexusCoinBalance >= nexusCoinRequiredAmount
+
     // ── Grup Pembayaran ───────────────────────────────────────────────────────
     val paymentGroups = listOf(
         PaymentGroup("Nexus Coin", listOf(
             PaymentMethod(
-                "nexus_coin", "Nexus Coin",
-                "Bebas Biaya Admin • Saldo: 0 Coin",
-                isBestPrice = true
+                id          = "nexus_coin",
+                name        = "Nexus Coin",
+                description = if (hasEnoughNexusCoin)
+                    "Bebas Biaya Admin • Saldo: ${formatCoin(nexusCoinBalance)} Coin"
+                else
+                    "Saldo tidak cukup • Saldo: ${formatCoin(nexusCoinBalance)} Coin",
+                isBestPrice = true,
+                isDisabled  = !hasEnoughNexusCoin
             )
         )),
         PaymentGroup("QRIS", listOf(
@@ -125,15 +154,13 @@ fun TopUpScreen(gameId: Int) {
         ))
     )
 
-    // ── Kalkulasi Harga ───────────────────────────────────────────────────────
-    val basePrice      = selectedOption?.price
-        ?.replace("Rp ", "")?.replace(".", "")?.toIntOrNull() ?: 0
-    val subtotal       = basePrice * quantity
-    val discountAmount = (subtotal * promoDiscount) / 100
-    val adminFee       = if (selectedPayment?.id == "nexus_coin") 0 else 675
-    val totalPrice     = subtotal - discountAmount + adminFee
-
-    fun formatRp(value: Int) = "Rp ${"%,d".format(value).replace(',', '.')}"
+    // Jika nominal/diskon berubah sehingga saldo Nexus Coin yang tadinya
+    // cukup jadi tidak cukup lagi, batalkan pilihan Nexus Coin secara otomatis.
+    LaunchedEffect(selectedPayment?.id, hasEnoughNexusCoin) {
+        if (selectedPayment?.id == "nexus_coin" && !hasEnoughNexusCoin) {
+            selectedPayment = null
+        }
+    }
 
     // ── Validasi Promo ────────────────────────────────────────────────────────
     fun applyPromo() {
@@ -241,6 +268,9 @@ fun TopUpScreen(gameId: Int) {
         },
         bottomBar = {
             Surface(shadowElevation = 12.dp) {
+                val isNexusCoinInsufficient =
+                    selectedPayment?.id == "nexus_coin" && !hasEnoughNexusCoin
+
                 Button(
                     onClick = {
                         var hasError = false
@@ -258,7 +288,8 @@ fun TopUpScreen(gameId: Int) {
                         }
                         if (!hasError &&
                             selectedOption != null &&
-                            selectedPayment != null
+                            selectedPayment != null &&
+                            !isNexusCoinInsufficient
                         ) {
                             backStack.add(
                                 Route.OrderConfirmation(
@@ -278,7 +309,8 @@ fun TopUpScreen(gameId: Int) {
                             )
                         }
                     },
-                    enabled = selectedOption != null && selectedPayment != null,
+                    enabled = selectedOption != null && selectedPayment != null &&
+                            !isNexusCoinInsufficient,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
@@ -294,6 +326,7 @@ fun TopUpScreen(gameId: Int) {
                         text = when {
                             selectedOption == null  -> "Pilih Nominal Terlebih Dahulu"
                             selectedPayment == null -> "Pilih Metode Pembayaran"
+                            isNexusCoinInsufficient -> "Saldo Nexus Coin Tidak Cukup"
                             else -> "Pesan Sekarang! • ${formatRp(totalPrice)}"
                         },
                         fontWeight = FontWeight.Bold,
@@ -469,7 +502,8 @@ fun TopUpScreen(gameId: Int) {
                             onSelectPayment = { method ->
                                 selectedPayment = method
                                 expandedGroup   = null
-                            }
+                            },
+                            onTopUpClick = { backStack.add(Route.NexusCoinTopUp) }
                         )
                     }
                 }
@@ -1190,7 +1224,8 @@ fun PaymentGroupSection(
     selectedPayment: PaymentMethod?,
     isExpanded: Boolean,
     onToggle: () -> Unit,
-    onSelectPayment: (PaymentMethod) -> Unit
+    onSelectPayment: (PaymentMethod) -> Unit,
+    onTopUpClick: (() -> Unit)? = null
 ) {
     val isGroupSelected = group.methods.any { it.id == selectedPayment?.id }
 
@@ -1245,9 +1280,10 @@ fun PaymentGroupSection(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             group.methods.forEachIndexed { index, method ->
                 PaymentMethodItem(
-                    method     = method,
-                    isSelected = selectedPayment?.id == method.id,
-                    onClick    = { onSelectPayment(method) }
+                    method       = method,
+                    isSelected   = selectedPayment?.id == method.id,
+                    onClick      = { if (!method.isDisabled) onSelectPayment(method) },
+                    onTopUpClick = onTopUpClick
                 )
                 if (index < group.methods.lastIndex) {
                     HorizontalDivider(
@@ -1267,53 +1303,86 @@ fun PaymentGroupSection(
 fun PaymentMethodItem(
     method: PaymentMethod,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onTopUpClick: (() -> Unit)? = null
 ) {
-    Row(
+    val contentAlpha = if (method.isDisabled) 0.45f else 1f
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable(enabled = !method.isDisabled) { onClick() }
             .background(
                 if (isSelected)
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
                 else Color.Transparent
             )
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        // ✅ Logo custom per metode pembayaran
-        PaymentLogo(methodId = method.id)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // ✅ Logo custom per metode pembayaran
+            PaymentLogo(
+                methodId = method.id,
+                modifier = Modifier.alpha(contentAlpha)
+            )
 
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(method.name,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.bodyMedium)
-                if (method.isBestPrice) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = Color(0xFFFF6B00)
-                    ) {
-                        Text("BEST PRICE",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(
-                                horizontal = 4.dp, vertical = 2.dp
-                            ))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(method.name,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha))
+                    if (method.isBestPrice && !method.isDisabled) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = Color(0xFFFF6B00)
+                        ) {
+                            Text("BEST PRICE",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(
+                                    horizontal = 4.dp, vertical = 2.dp
+                                ))
+                        }
                     }
                 }
+                Text(method.description,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (method.isDisabled)
+                        MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(method.description,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            RadioButton(
+                selected = isSelected,
+                onClick  = onClick,
+                enabled  = !method.isDisabled
+            )
         }
 
-        RadioButton(selected = isSelected, onClick = onClick)
+        // ── Saldo tidak cukup: tampilkan tombol Top Up ────────────────────
+        if (method.isDisabled && method.id == "nexus_coin" && onTopUpClick != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick  = onTopUpClick,
+                shape    = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth().height(36.dp),
+                colors   = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFFFA726)
+                )
+            ) {
+                Icon(Icons.Rounded.AddCircle, null, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Top Up Nexus Coin", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
+        }
     }
 }
 

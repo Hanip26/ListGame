@@ -83,6 +83,11 @@ fun PaymentProgressScreen(
             "yyyy/MM/dd HH:mm:ss", Locale.getDefault()
         ).format(Date())
 
+        // ── Potong saldo Nexus Coin jika dibayar dengan Nexus Coin ─────────
+        if (route.paymentName == "Nexus Coin") {
+            appViewModel.deductNexusCoins(route.totalPrice)
+        }
+
         // ── Simpan transaksi ke DataStore ─────────────────────────────────
         appViewModel.addTransaction(
             Transaction(

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.listgame.model.NexusCoinTransaction
 import com.example.listgame.model.Transaction
 import com.example.listgame.model.TransactionStatus
 import com.example.listgame.model.User
@@ -27,9 +28,16 @@ object PreferencesKeys {
     fun favoriteGamesKey(username: String) =
         stringPreferencesKey("favorite_games_${username.lowercase()}")
 
-    // Per-akun: riwayat transaksi
+    // Per-akun: riwayat transaksi game top-up
     fun transactionsKey(username: String) =
         stringPreferencesKey("transactions_${username.lowercase()}")
+
+    // ── NEXUS Coin: saldo & riwayat ──────────────────────────────────────────
+    fun nexusCoinBalanceKey(username: String) =
+        intPreferencesKey("nexus_coin_balance_${username.lowercase()}")
+
+    fun nexusCoinHistoryKey(username: String) =
+        stringPreferencesKey("nexus_coin_history_${username.lowercase()}")
 }
 
 class AppDataStore(private val context: Context) {
@@ -58,6 +66,36 @@ class AppDataStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.favoriteGamesKey(username)] = "[]"
         }
+    }
+
+    // ── RESET password via email (untuk lupa password) ───────────────────────
+    suspend fun resetPasswordByEmail(
+        usernameOrEmail : String,
+        newHash         : String
+    ): ResetPasswordResult {
+        var result: ResetPasswordResult = ResetPasswordResult.Success
+        context.dataStore.edit { prefs ->
+            val list = try {
+                Json.decodeFromString<MutableList<User>>(
+                    prefs[PreferencesKeys.REGISTERED_USERS] ?: "[]"
+                )
+            } catch (e: Exception) { mutableListOf() }
+
+            val input = usernameOrEmail.trim()
+            val idx   = list.indexOfFirst {
+                it.username.equals(input, ignoreCase = true) ||
+                        it.email.equals(input, ignoreCase = true)
+            }
+
+            if (idx == -1) {
+                result = ResetPasswordResult.UserNotFound
+                return@edit
+            }
+
+            list[idx] = list[idx].copy(passwordHash = newHash)
+            prefs[PreferencesKeys.REGISTERED_USERS] = Json.encodeToString(list)
+        }
+        return result
     }
 
     // ── Global ────────────────────────────────────────────────────────────────
@@ -143,7 +181,6 @@ class AppDataStore(private val context: Context) {
             val idx = list.indexOfFirst { it.username.equals(username, ignoreCase = true) }
             if (idx == -1) { result = UpdateProfileResult.UserNotFound; return@edit }
 
-            // Cek apakah email sudah dipakai akun LAIN
             val emailTaken = list.any {
                 !it.username.equals(username, ignoreCase = true) &&
                         it.email.equals(email, ignoreCase = true)
@@ -163,9 +200,9 @@ class AppDataStore(private val context: Context) {
 
     // ── UPDATE password ───────────────────────────────────────────────────────
     suspend fun updatePassword(
-        username       : String,
-        currentHash    : String,
-        newHash        : String
+        username    : String,
+        currentHash : String,
+        newHash     : String
     ): ChangePasswordResult {
         var result: ChangePasswordResult = ChangePasswordResult.Success
         context.dataStore.edit { prefs ->
@@ -203,7 +240,7 @@ class AppDataStore(private val context: Context) {
         }
     }
 
-    // ── Transaksi per akun ────────────────────────────────────────────────────
+    // ── Transaksi per akun (game top-up) ─────────────────────────────────────
     fun transactionsFlow(username: String): Flow<List<Transaction>> =
         context.dataStore.data
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
@@ -218,9 +255,57 @@ class AppDataStore(private val context: Context) {
             val list = try {
                 Json.decodeFromString<MutableList<Transaction>>(prefs[key] ?: "[]")
             } catch (e: Exception) { mutableListOf() }
-            // Simpan paling baru di depan, max 50 entri
             list.add(0, transaction)
             if (list.size > 50) list.subList(50, list.size).clear()
+            prefs[key] = Json.encodeToString(list)
+        }
+    }
+
+    // ── NEXUS Coin: saldo ─────────────────────────────────────────────────────
+    fun nexusCoinBalanceFlow(username: String): Flow<Int> =
+        context.dataStore.data
+            .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+            .map { prefs -> prefs[PreferencesKeys.nexusCoinBalanceKey(username)] ?: 0 }
+
+    suspend fun addNexusCoins(username: String, amount: Int) {
+        context.dataStore.edit { prefs ->
+            val key     = PreferencesKeys.nexusCoinBalanceKey(username)
+            val current = prefs[key] ?: 0
+            prefs[key]  = current + amount
+        }
+    }
+
+    suspend fun deductNexusCoins(username: String, amount: Int): Boolean {
+        var success = false
+        context.dataStore.edit { prefs ->
+            val key     = PreferencesKeys.nexusCoinBalanceKey(username)
+            val current = prefs[key] ?: 0
+            if (current >= amount) {
+                prefs[key] = current - amount
+                success = true
+            }
+        }
+        return success
+    }
+
+    // ── NEXUS Coin: riwayat ───────────────────────────────────────────────────
+    fun nexusCoinHistoryFlow(username: String): Flow<List<NexusCoinTransaction>> =
+        context.dataStore.data
+            .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+            .map { prefs ->
+                val json = prefs[PreferencesKeys.nexusCoinHistoryKey(username)] ?: "[]"
+                try { Json.decodeFromString<List<NexusCoinTransaction>>(json) }
+                catch (e: Exception) { emptyList() }
+            }
+
+    suspend fun addNexusCoinTransaction(username: String, trx: NexusCoinTransaction) {
+        context.dataStore.edit { prefs ->
+            val key  = PreferencesKeys.nexusCoinHistoryKey(username)
+            val list = try {
+                Json.decodeFromString<MutableList<NexusCoinTransaction>>(prefs[key] ?: "[]")
+            } catch (e: Exception) { mutableListOf() }
+            list.add(0, trx)
+            if (list.size > 100) list.subList(100, list.size).clear()
             prefs[key] = Json.encodeToString(list)
         }
     }
@@ -243,4 +328,9 @@ sealed class ChangePasswordResult {
     object Success             : ChangePasswordResult()
     object UserNotFound        : ChangePasswordResult()
     object WrongCurrentPassword: ChangePasswordResult()
+}
+
+sealed class ResetPasswordResult {
+    object Success     : ResetPasswordResult()
+    object UserNotFound: ResetPasswordResult()
 }

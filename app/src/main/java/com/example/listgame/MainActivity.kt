@@ -21,6 +21,10 @@ import com.example.listgame.viewmodel.AuthViewModel
 import com.example.listgame.ui.screen.CekTransaksiScreen
 import com.example.listgame.ui.screen.KalkulatorWinRateScreen
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.listgame.ui.screen.ForgotPasswordScreen
+import com.example.listgame.ui.screen.NexusCoinTopUpScreen
+import com.example.listgame.ui.screen.NexusCoinHistoryScreen
+import com.example.listgame.ui.screen.NexusCoinRedeemScreen
 
 @AndroidEntryPoint
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -82,7 +86,8 @@ class MainActivity : ComponentActivity() {
                                                 backStack.clear()
                                                 backStack.add(Route.Home(username))
                                             },
-                                            onNavigateToRegister = { backStack.add(Route.Register) }
+                                            onNavigateToRegister = { backStack.add(Route.Register) },
+                                            onNavigateToForgotPassword = { backStack.add(Route.ForgotPassword) }
                                         )
                                     }
 
@@ -95,6 +100,17 @@ class MainActivity : ComponentActivity() {
                                                 backStack.add(Route.Login)
                                             },
                                             onNavigateBack = { backStack.removeLastOrNull() }
+                                        )
+                                    }
+
+                                    is Route.ForgotPassword -> {
+                                        ForgotPasswordScreen(
+                                            viewModel      = authViewModel,
+                                            onResetSuccess = {
+                                                // Tampilkan snackbar sukses di LoginScreen
+                                                authViewModel.setRegisterSuccessMessage("Password berhasil direset! Silakan masuk.")
+                                                backStack.removeLastOrNull()
+                                            }
                                         )
                                     }
 
@@ -128,11 +144,12 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // ── Profil ────────────────────────────
+                                    // ── Profil (SUDAH DIPERBAIKI SINKRONISASINYA) ──
                                     is Route.Profile -> {
                                         ProfileScreen(
-                                            viewModel = authViewModel,
-                                            onLogout  = doLogout
+                                            authViewModel = authViewModel,
+                                            appViewModel  = appViewModel,
+                                            onLogout      = doLogout
                                         )
                                     }
 
@@ -146,7 +163,10 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     is Route.TopUp -> {
-                                        TopUpScreen(gameId = currentRoute.gameId)
+                                        TopUpScreen(
+                                            gameId       = currentRoute.gameId,
+                                            appViewModel = appViewModel
+                                        )
                                     }
 
                                     is Route.OrderConfirmation -> {
@@ -158,6 +178,18 @@ class MainActivity : ComponentActivity() {
                                             route        = currentRoute,
                                             appViewModel = appViewModel
                                         )
+                                    }
+
+                                    is Route.NexusCoinTopUp -> {
+                                        NexusCoinTopUpScreen(appViewModel = appViewModel)
+                                    }
+
+                                    is Route.NexusCoinRedeem -> {
+                                        NexusCoinRedeemScreen(appViewModel = appViewModel)
+                                    }
+
+                                    is Route.NexusCoinHistory -> {
+                                        NexusCoinHistoryScreen(appViewModel = appViewModel)
                                     }
 
                                     null -> {}

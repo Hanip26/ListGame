@@ -4,12 +4,18 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 
 sealed class Route {
-    object Login           : Route()
-    object Register        : Route()
-    object Profile         : Route()
-    object Dashboard       : Route()
-    object CekTransaksi    : Route()   // ✅ BARU
-    object KalkulatorWinRate : Route() // ✅ BARU
+    object Login             : Route()
+    object Register          : Route()
+    object Profile           : Route()
+    object Dashboard         : Route()
+    object CekTransaksi      : Route()
+    object KalkulatorWinRate : Route()
+    object ForgotPassword    : Route()
+
+    // ── NEXUS Coin ────────────────────────────────────────────────────────────
+    object NexusCoinTopUp    : Route()   // halaman pilih nominal + bayar
+    object NexusCoinHistory  : Route()   // riwayat & saldo
+    object NexusCoinRedeem   : Route()   // redeem kode voucher
 
     data class Home(val username: String) : Route()
     data class Detail(val gameId: Int)    : Route()
