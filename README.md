@@ -5,14 +5,15 @@
   <img src="https://img.shields.io/badge/Language-Kotlin-blueviolet?style=for-the-badge&logo=kotlin&logoColor=white"/>
   <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
   <img src="https://img.shields.io/badge/Architecture-MVVM-orange?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/DataStore-Preferences-success?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Network-Retrofit2-brightgreen?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/DI-Hilt-red?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Min%20SDK-24%20(Android%207.0)-orange?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Target%20SDK-36-blue?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge"/> 
 </p>
  
 <p align="center">
-  Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer lengkap dengan fitur authentication, wishlist, top up diamond, promo code, simulasi pembayaran, progress transaksi realtime, dan sistem invoice otomatis.
+  Aplikasi Android native berbasis <strong>Kotlin</strong> dan <strong>Jetpack Compose</strong> yang menampilkan daftar game populer lengkap dengan fitur authentication, wishlist, top up diamond, promo code, simulasi pembayaran, progress transaksi realtime, sistem invoice otomatis, dan integrasi API backend menggunakan <strong>Retrofit2</strong>.
 </p>
 
 ---
@@ -21,21 +22,25 @@
 
 ListGame adalah aplikasi Android Native yang dikembangkan sebagai bagian dari praktikum **Pengembangan Aplikasi Bergerak (PAB)**.
 
-Pada Week 9, aplikasi dikembangkan lebih lanjut dengan sistem authentication dan top up game digital menggunakan pendekatan modern Android Development berbasis MVVM Architecture.
+Pada Week 11, aplikasi dikembangkan lebih lanjut dengan integrasi HTTP Request menggunakan Retrofit2 untuk berkomunikasi dengan backend API secara langsung, menggantikan penggunaan dummy data lokal.
 
 Aplikasi ini memungkinkan pengguna untuk:
 
-1. Login & Register akun
-2. Menjelajahi daftar game populer
+1. Login & Register akun melalui API backend
+2. Menjelajahi daftar game populer dari API
 3. Melakukan pencarian instan
 4. Mengurutkan daftar game
-5. Menambahkan game ke wishlist
+5. Menambahkan game ke wishlist (tersimpan di backend)
 6. Melihat detail game secara lengkap
 7. Melakukan top up diamond / currency game
 8. Menggunakan promo code diskon
 9. Memilih metode pembayaran digital
 10. Melihat progress transaksi realtime
 11. Menyimpan session login menggunakan DataStore
+12. Mengelola saldo & riwayat Nexus Coin
+13. Mengecek transaksi berdasarkan Invoice ID
+14. Menghitung Win Rate game
+15. Reset password akun
 
 ---
 
@@ -47,13 +52,14 @@ Pengembangan aplikasi **ListGame** dilakukan secara bertahap sesuai dengan mater
 |----------|---------|---------|---------|
 | **Week 01** | Pengenalan Android Studio & Kotlin | Memahami lingkungan pengembangan Android dan dasar bahasa Kotlin. | Menjadi fondasi dalam pembangunan aplikasi Android Native menggunakan Kotlin. |
 | **Week 02** | Dasar Pemrograman Kotlin | Mempelajari variabel, fungsi, percabangan, perulangan, dan collection. | Digunakan pada logika aplikasi seperti validasi login, filtering game, sorting game, dan perhitungan promo top up. |
-| **Week 03** | Object Oriented Programming (OOP) | Memahami konsep class, object, encapsulation, inheritance, dan abstraction. | Digunakan pada model data seperti `Game.kt`, `User.kt`, ViewModel, dan Repository. |
+| **Week 03** | Object Oriented Programming (OOP) | Memahami konsep class, object, encapsulation, inheritance, dan abstraction. | Digunakan pada model data seperti `Game.kt`, `User.kt`, ViewModel, Repository, dan data class API response. |
 | **Week 04** | Pembuatan User Interface Android | Mempelajari komponen UI dan penyusunan tampilan aplikasi. | Digunakan pada Login Screen, Register Screen, Dashboard Screen, dan komponen antarmuka lainnya. |
 | **Week 05** | Layout dan Interaksi Pengguna | Mempelajari event handling dan interaksi pengguna dengan aplikasi. | Implementasi form login, register, tombol navigasi, validasi input, dan interaksi pengguna. |
 | **Week 06** | Jetpack Compose | Mempelajari framework UI modern Android berbasis declarative programming. | Seluruh tampilan aplikasi dibangun menggunakan Jetpack Compose dan Material 3. |
 | **Week 07** | State Management & Navigation | Memahami pengelolaan state dan perpindahan halaman aplikasi. | Digunakan pada sistem navigasi antar halaman, wishlist, dan pengelolaan state aplikasi. |
 | **Week 09** | Authentication & Data Persistence | Mempelajari autentikasi pengguna dan penyimpanan data lokal. | Implementasi Login, Register, Logout, Session Login, dan DataStore Preferences. |
 | **Week 10** | Arsitektur Modern Android (MVVM) | Memahami pemisahan tanggung jawab antara UI dan Business Logic. | Implementasi MVVM Architecture menggunakan ViewModel, Repository, dan DataStore. |
+| **Week 11** | HTTP Request & Retrofit | Mempelajari komunikasi jaringan antara aplikasi Android dan backend API menggunakan Retrofit2. | Implementasi `RetrofitClient`, `ApiService`, Repository network layer, dan integrasi seluruh fitur dengan REST API backend (games, packages, transactions, favorites, profile, Nexus Coin). |
 
 ### 🎯 Capaian Pembelajaran
 
@@ -74,6 +80,9 @@ Melalui pengembangan aplikasi **ListGame**, berbagai konsep yang dipelajari sela
 - ✅ Wishlist Management
 - ✅ Top Up Transaction System
 - ✅ Promo Code & Discount Calculation
+- ✅ HTTP Request menggunakan Retrofit2
+- ✅ REST API Integration
+- ✅ Dependency Injection menggunakan Hilt
 - ✅ Modern Android Development Practices
 
 ---
@@ -86,27 +95,35 @@ Melalui pengembangan aplikasi **ListGame**, berbagai konsep yang dipelajari sela
 4. 🎨 Material 3
 5. 🧠 MVVM Architecture
 6. 💾 DataStore Preferences
-7. ✅ Completed Project
+7. 🌐 Retrofit2 + OkHttp3
+8. 🔷 Hilt (Dependency Injection)
+9. ✅ Completed Project
 
 ---
 
 ## ✨ Highlights
 
-1. 🔐 Authentication System (Login & Register)
+1. 🔐 Authentication System (Login & Register via API)
 2. 💾 Session Login menggunakan DataStore
-3. 🔍 Pencarian game secara real-time
-4. 🔃 Sorting game (A-Z, Z-A, Rating Tertinggi)
-5. ❤️ Wishlist / favorit system
-6. 📄 Detail game lengkap
-7. 💎 Sistem Top Up Diamond
-8. 💳 Simulasi pembayaran digital
-9. 🎟️ Promo code & discount system
-10. 📋 Order confirmation screen
-11. ⏳ Payment progress realtime
-12. 🧾 Invoice transaksi otomatis
-13. 👤 Profile user system
-14. ⚡ UI modern berbasis Jetpack Compose
-15. 🧭 Custom navigation tanpa Navigation Component
+3. 🌐 HTTP Request menggunakan Retrofit2
+4. 🔍 Pencarian game secara real-time
+5. 🔃 Sorting game (A-Z, Z-A, Rating Tertinggi)
+6. ❤️ Wishlist / favorit system (tersimpan di backend)
+7. 📄 Detail game lengkap dari API
+8. 💎 Sistem Top Up Diamond
+9. 💳 Simulasi pembayaran digital
+10. 🎟️ Promo code & discount system
+11. 📋 Order confirmation screen
+12. ⏳ Payment progress realtime
+13. 🧾 Invoice transaksi otomatis
+14. 🪙 Nexus Coin (saldo, top up, redeem, riwayat)
+15. 🔎 Cek transaksi by Invoice ID
+16. 🧮 Kalkulator Win Rate
+17. 🔑 Forgot & Reset Password
+18. 👤 Profile user system (lihat & edit profil)
+19. ⚡ UI modern berbasis Jetpack Compose
+20. 🧭 Custom navigation tanpa Navigation Component
+21. 💉 Dependency Injection menggunakan Hilt
 
 ---
 
@@ -122,34 +139,82 @@ ListGame App
 │           │   ├── data
 │           │   │   ├── AppDataStore.kt
 │           │   │   ├── DummyData.kt
+│           │   │   ├── TransactionRepository.kt
 │           │   │   └── UserRepository.kt
 │           │
+│           │   ├── di
+│           │   │   └── AppModule.kt
+│           │
 │           │   ├── model
+│           │   │   ├── api
+│           │   │   │   ├── ApiGame.kt
+│           │   │   │   ├── ApiPackage.kt
+│           │   │   │   ├── ApiUser.kt
+│           │   │   │   ├── Favorite.kt
+│           │   │   │   ├── GamesResponse.kt
+│           │   │   │   ├── HistoryResponse.kt
+│           │   │   │   ├── LoginRequest.kt
+│           │   │   │   ├── LoginResponse.kt
+│           │   │   │   ├── NexusCoinApiModels.kt
+│           │   │   │   ├── PackageResponse.kt
+│           │   │   │   ├── ProfileApiModels.kt
+│           │   │   │   ├── RegisterRequest.kt
+│           │   │   │   ├── RegisterResponse.kt
+│           │   │   │   ├── TransactionDetailResponse.kt
+│           │   │   │   └── TransactionHistory.kt
+│           │   │   │
 │           │   │   ├── AppViewModel.kt
 │           │   │   ├── AuthViewModel.kt
 │           │   │   ├── Game.kt
+│           │   │   ├── GameApiViewModel.kt
+│           │   │   ├── HistoryViewModel.kt
+│           │   │   ├── NexusCoinTransaction.kt
+│           │   │   ├── PackageViewModel.kt
+│           │   │   ├── Transaction.kt
+│           │   │   ├── TransactionViewModel.kt
 │           │   │   └── User.kt
 │           │
 │           │   ├── navigation
 │           │   │   └── Routes.kt
 │           │
+│           │   ├── network
+│           │   │   ├── ApiService.kt
+│           │   │   ├── FavoriteRepository.kt
+│           │   │   ├── GameRepository.kt
+│           │   │   ├── HistoryRepository.kt
+│           │   │   ├── NexusCoinRepository.kt
+│           │   │   ├── PackageRepository.kt
+│           │   │   ├── RetrofitClient.kt
+│           │   │   ├── TransactionRequest.kt
+│           │   │   └── TransactionResponse.kt
+│           │
 │           │   ├── ui
+│           │   │   ├── components
+│           │   │   │   └── BottomNavBar.kt
+│           │   │   │
 │           │   │   ├── screen
+│           │   │   │   ├── CekTransaksiScreen.kt
 │           │   │   │   ├── DashboardScreen.kt
+│           │   │   │   ├── ForgotPasswordScreen.kt
 │           │   │   │   ├── GameDetailScreen.kt
 │           │   │   │   ├── GameListScreen.kt
+│           │   │   │   ├── KalkulatorWinRateScreen.kt
 │           │   │   │   ├── LoginScreen.kt
+│           │   │   │   ├── NexusCoinHistoryScreen.kt
+│           │   │   │   ├── NexusCoinRedeemScreen.kt
+│           │   │   │   ├── NexusCoinTopUpScreen.kt
 │           │   │   │   ├── OrderConfirmationScreen.kt
 │           │   │   │   ├── PaymentProgressScreen.kt
 │           │   │   │   ├── ProfileScreen.kt
 │           │   │   │   ├── RegisterScreen.kt
 │           │   │   │   └── TopUpScreen.kt
 │           │   │
-│           │   │   └── theme
-│           │   │       ├── Color.kt
-│           │   │       ├── Theme.kt
-│           │   │       └── Type.kt
-│           │   │
+│           │   └── theme
+│           │       ├── Color.kt
+│           │       ├── Theme.kt
+│           │       └── Type.kt
+│           │
+│           │   ├── ListGameApplication.kt
 │           │   └── MainActivity.kt
 │           │
 │           ├── res
@@ -174,21 +239,26 @@ ListGame App
 
 | Ikon | Fitur | Deskripsi |
 | :---: | :--- | :--- |
-| 🔐 | **Authentication System** | Login & Register akun menggunakan validasi user dan penyimpanan session DataStore. |
+| 🔐 | **Authentication System** | Login & Register akun melalui REST API backend dengan validasi dan penyimpanan session DataStore. |
 | 💾 | **Session Persistence** | Login user tetap tersimpan menggunakan DataStore Preferences. |
-| 📋 | **Dynamic Game List** | Menampilkan daftar game populer menggunakan `LazyColumn` dengan performa tinggi. |
+| 🌐 | **HTTP Request & Retrofit** | Seluruh data game, paket, transaksi, dan profil diambil langsung dari backend melalui Retrofit2. |
+| 📋 | **Dynamic Game List** | Menampilkan daftar game populer dari API menggunakan `LazyColumn` dengan performa tinggi. |
 | 🔍 | **Pencarian Real-Time** | Pencarian game instan secara realtime tanpa reload halaman. |
 | 🔃 | **Sorting Game** | Sorting game berdasarkan A-Z, Z-A, dan Rating Tertinggi. |
-| ❤️ | **Wishlist System** | Menyimpan game favorit dengan state persistence menggunakan `rememberSaveable`. |
-| 📄 | **Detail Game Lengkap** | Menampilkan banner, genre, rating, deskripsi, dan update terbaru game. |
-| 💎 | **Top Up Diamond** | Pembelian diamond atau game currency dengan berbagai nominal. |
+| ❤️ | **Wishlist System** | Menyimpan game favorit ke backend menggunakan Favorite API endpoint. |
+| 📄 | **Detail Game Lengkap** | Menampilkan banner, genre, rating, deskripsi, dan update terbaru game dari API. |
+| 💎 | **Top Up Diamond** | Pembelian diamond atau game currency dengan berbagai nominal dari API. |
 | 💳 | **Payment Method** | Simulasi pembayaran digital menggunakan QRIS, OVO, DANA, GoPay, dll. |
 | 🎟️ | **Promo Code** | Sistem promo code otomatis dengan perhitungan diskon realtime. |
 | 📋 | **Order Confirmation** | Ringkasan transaksi sebelum pembayaran dilakukan. |
 | ⏳ | **Payment Progress** | Simulasi progress transaksi realtime hingga pembayaran berhasil. |
-| 🧾 | **Invoice System** | Pembuatan invoice otomatis setelah transaksi selesai. |
-| 👤 | **Profile Screen** | Menampilkan informasi akun pengguna dan logout session. |
+| 🧾 | **Invoice System** | Pembuatan invoice otomatis dan pengecekan transaksi berdasarkan Invoice ID melalui API. |
+| 🪙 | **Nexus Coin** | Sistem koin internal: top up saldo, redeem voucher, dan riwayat transaksi via API. |
+| 🧮 | **Kalkulator Win Rate** | Fitur utilitas untuk menghitung persentase Win Rate game. |
+| 🔑 | **Forgot & Reset Password** | Alur check user dan reset password melalui API backend. |
+| 👤 | **Profile Screen** | Menampilkan, mengedit informasi akun, ganti password, dan logout session. |
 | 🧭 | **Custom Navigation** | Sistem navigasi berbasis custom backstack tanpa Navigation Component. |
+| 💉 | **Dependency Injection** | Pengelolaan dependensi menggunakan Hilt (`AppModule`, `@HiltAndroidApp`). |
 
 ---
 
@@ -199,14 +269,35 @@ Project menggunakan pendekatan modern Android Architecture yaitu:
 ### MVVM (Model View ViewModel)
 
 #### 📦 Model
-Berisi data class dan representasi data aplikasi:
+Berisi data class, representasi data aplikasi, dan API response model:
 - `Game.kt`
 - `User.kt`
+- `Transaction.kt`
+- `NexusCoinTransaction.kt`
+- `api/ApiGame.kt`, `api/ApiPackage.kt`, `api/LoginRequest.kt`, `api/LoginResponse.kt`
+- `api/GamesResponse.kt`, `api/PackageResponse.kt`, `api/HistoryResponse.kt`
+- `api/Favorite.kt`, `api/ProfileApiModels.kt`, `api/NexusCoinApiModels.kt`
+- `api/TransactionDetailResponse.kt`, `api/TransactionHistory.kt`
 
 #### 🧠 ViewModel
 Mengelola state aplikasi dan business logic:
 - `AppViewModel.kt`
 - `AuthViewModel.kt`
+- `GameApiViewModel.kt`
+- `PackageViewModel.kt`
+- `HistoryViewModel.kt`
+- `TransactionViewModel.kt`
+
+#### 🌐 Network Layer
+Menangani komunikasi HTTP dengan backend API:
+- `RetrofitClient.kt`
+- `ApiService.kt`
+- `GameRepository.kt`
+- `PackageRepository.kt`
+- `FavoriteRepository.kt`
+- `HistoryRepository.kt`
+- `NexusCoinRepository.kt`
+- `TransactionRequest.kt` / `TransactionResponse.kt`
 
 #### 🎨 View
 Berisi seluruh tampilan berbasis Jetpack Compose:
@@ -219,6 +310,69 @@ Berisi seluruh tampilan berbasis Jetpack Compose:
 - OrderConfirmationScreen
 - PaymentProgressScreen
 - ProfileScreen
+- CekTransaksiScreen
+- KalkulatorWinRateScreen
+- ForgotPasswordScreen
+- NexusCoinTopUpScreen
+- NexusCoinHistoryScreen
+- NexusCoinRedeemScreen
+
+---
+
+## 🌐 HTTP Request & Retrofit (Week 11)
+
+### RetrofitClient
+Konfigurasi singleton Retrofit yang mengarah ke backend API:
+
+```kotlin
+object RetrofitClient {
+    private const val BASE_URL = "http://10.0.2.2:8000/api/"
+
+    val api: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+}
+```
+
+### ApiService
+Interface yang mendefinisikan seluruh endpoint REST API:
+
+| Method | Endpoint | Fungsi |
+| :--- | :--- | :--- |
+| `POST` | `login` | Login akun pengguna |
+| `POST` | `register` | Registrasi akun baru |
+| `GET` | `games` | Mengambil daftar game dari server |
+| `GET` | `games/{id}/packages` | Mengambil paket top up berdasarkan game |
+| `POST` | `transactions` | Membuat transaksi top up baru |
+| `GET` | `transactions` | Mengambil riwayat transaksi |
+| `GET` | `transactions/{invoice_id}` | Mengambil detail transaksi by Invoice ID |
+| `GET` | `favorites/{username}` | Mengambil daftar favorit user |
+| `POST` | `favorites` | Toggle favorit game |
+| `DELETE` | `favorites/{username}` | Menghapus semua favorit user |
+| `GET` | `profile/{username}` | Mengambil profil pengguna |
+| `PUT` | `profile` | Memperbarui data profil |
+| `POST` | `change-password` | Mengganti password akun |
+| `POST` | `check-user` | Cek keberadaan user (forgot password) |
+| `POST` | `reset-password` | Reset password akun |
+| `GET` | `nexus-coin/balance/{username}` | Mengambil saldo Nexus Coin |
+| `GET` | `nexus-coin/history/{username}` | Mengambil riwayat Nexus Coin |
+| `POST` | `nexus-coin/add` | Menambah saldo Nexus Coin |
+| `POST` | `nexus-coin/deduct` | Mengurangi saldo Nexus Coin |
+
+### Network Repositories
+Setiap domain fitur memiliki repository tersendiri sebagai abstraction layer:
+
+| Repository | Fungsi |
+| :--- | :--- |
+| `GameRepository` | Mengambil daftar game dari API |
+| `PackageRepository` | Mengambil paket top up berdasarkan game ID |
+| `FavoriteRepository` | Mengelola favorit game (get, toggle, clear) |
+| `HistoryRepository` | Mengambil riwayat & detail transaksi |
+| `NexusCoinRepository` | Mengelola saldo, riwayat, tambah, dan potong Nexus Coin |
 
 ---
 
@@ -228,7 +382,7 @@ Berisi seluruh tampilan berbasis Jetpack Compose:
 Halaman login utama aplikasi:
 1. Input username & password
 2. Validasi form login
-3. Session login otomatis
+3. Session login otomatis via API
 4. Error handling jika input kosong
 5. Redirect menuju dashboard
 
@@ -236,9 +390,15 @@ Halaman login utama aplikasi:
 Halaman registrasi akun:
 1. Input username baru
 2. Input password
-3. Validasi register
-4. Simpan data user
+3. Validasi register via API
+4. Simpan data user ke backend
 5. Redirect ke login
+
+### Forgot Password Screen
+Alur reset password:
+1. Input username atau email
+2. Verifikasi keberadaan user via `check-user` API
+3. Reset password via `reset-password` API
 
 ### 💾 DataStore Preferences
 Digunakan untuk:
@@ -255,18 +415,19 @@ Halaman utama setelah login:
 1. Greeting user
 2. Navigasi fitur utama
 3. Shortcut menuju game list
-4. Modern Compose UI
-5. Navigasi profile
+4. Shortcut menuju Nexus Coin
+5. Modern Compose UI
+6. Bottom navigation bar
 
 ---
 
 ## 🎮 Game List Screen
 
 Halaman daftar game populer:
-1. Menampilkan game menggunakan `LazyColumn`
+1. Data game diambil dari API via `GameApiViewModel`
 2. Search realtime
 3. Sorting game
-4. Wishlist system
+4. Wishlist system (tersinkron dengan API)
 5. Navigasi detail game
 6. UI card modern
 
@@ -282,7 +443,7 @@ Halaman detail game:
 5. Ukuran file
 6. Deskripsi lengkap
 7. Informasi update terbaru
-8. Tombol wishlist
+8. Tombol wishlist (toggle via API)
 9. Tombol top up
 10. Tombol share game
 
@@ -290,20 +451,19 @@ Halaman detail game:
 
 ## 💎 Top Up Screen
 
-Fitur utama Week 9.
-
 Pengguna dapat melakukan pembelian diamond / currency game.
 
 ### 🎯 Input User ID
 User memasukkan ID akun game mereka.
 
 ### 💎 Pilihan Nominal
-Contoh:
+Nominal paket diambil dari API berdasarkan game ID:
 - 86 Diamonds
 - 172 Diamonds
 - 257 Diamonds
 - 706 Diamonds
 - Weekly Pass
+- (dan lainnya sesuai data API)
 
 ### 💳 Payment Method
 Metode pembayaran yang tersedia:
@@ -347,7 +507,7 @@ Halaman ringkasan transaksi:
 
 ## ⏳ Payment Progress Screen
 
-Mensimulasikan transaksi pembayaran realtime.
+Mensimulasikan transaksi pembayaran realtime dan menyimpan transaksi ke API.
 
 ### Tahapan Progress:
 1. CREATED
@@ -362,16 +522,56 @@ Mensimulasikan transaksi pembayaran realtime.
 - Invoice otomatis
 - Receipt transaksi
 - Status pembayaran realtime
+- Transaksi tersimpan ke backend
+
+---
+
+## 🪙 Nexus Coin
+
+Sistem koin internal aplikasi ListGame.
+
+### NexusCoin Top Up Screen
+Halaman top up saldo Nexus Coin:
+1. Pilih nominal top up (misal: Rp 10.000, Rp 50.000, dll)
+2. Pilih metode pembayaran
+3. Saldo ditambahkan via `nexus-coin/add` API
+
+### NexusCoin History Screen
+Halaman riwayat & saldo Nexus Coin:
+1. Tampilkan saldo terkini dari API
+2. Riwayat transaksi koin
+
+### NexusCoin Redeem Screen
+Halaman redeem voucher Nexus Coin:
+1. Input kode voucher
+2. Koin dikurangi via `nexus-coin/deduct` API
+
+---
+
+## 🔎 Cek Transaksi Screen
+
+Halaman pengecekan status transaksi:
+1. Input Invoice ID
+2. Tampilkan detail transaksi dari API
+3. Status pembayaran
+
+---
+
+## 🧮 Kalkulator Win Rate Screen
+
+Fitur utilitas tambahan:
+1. Input jumlah menang & total match
+2. Hitung persentase Win Rate otomatis
 
 ---
 
 ## 👤 Profile Screen
 
 Halaman informasi user:
-1. Username user
-2. Session account
-3. Logout account
-4. Informasi akun
+1. Data profil diambil dari API
+2. Edit profil (display name, email, nomor HP, bio)
+3. Ganti password
+4. Logout account
 
 ---
 
@@ -380,21 +580,27 @@ Halaman informasi user:
 Aplikasi menggunakan sistem navigasi custom back stack:
 
 ```text
-Login Screen
+Login Screen ──────────────────────────── Forgot Password Screen
       ↓
 Register Screen
       ↓
 Dashboard Screen
-      ↓
-Game List Screen
-      ↓
-Game Detail Screen
-      ↓
-Top Up Screen
-      ↓
-Order Confirmation Screen
-      ↓
-Payment Progress Screen
+  ├── Game List Screen
+  │       ↓
+  │   Game Detail Screen
+  │       ↓
+  │   Top Up Screen
+  │       ↓
+  │   Order Confirmation Screen
+  │       ↓
+  │   Payment Progress Screen
+  │
+  ├── Nexus Coin Top Up Screen
+  ├── Nexus Coin History Screen
+  ├── Nexus Coin Redeem Screen
+  ├── Cek Transaksi Screen
+  ├── Kalkulator Win Rate Screen
+  └── Profile Screen
 ```
 
 ---
@@ -418,17 +624,18 @@ Payment Progress Screen
 
 ---
 
-## 📁 Data: 7 Game Populer
+## 📁 Data: Game Populer dari API
 
-| # | Judul Game | Genre | Rating |
-| :---: | :--- | :--- | :---: |
-| 1 | Mobile Legends | MOBA | ⭐ 4.6 |
-| 2 | Free Fire | Battle Royale | ⭐ 4.3 |
-| 3 | Genshin Impact | RPG Open World | ⭐ 4.7 |
-| 4 | PUBG Mobile | Shooter | ⭐ 4.4 |
-| 5 | Roblox | Sandbox | ⭐ 4.4 |
-| 6 | Call of Duty Mobile | FPS | ⭐ 4.5 |
-| 7 | Among Us | Casual | ⭐ 4.2 |
+Data game tidak lagi menggunakan dummy data lokal. Seluruh data diambil secara dinamis dari backend API melalui endpoint `GET /api/games`.
+
+| Field | Tipe | Keterangan |
+| :--- | :--- | :--- |
+| `id` | Int | ID unik game |
+| `title` | String | Nama game |
+| `developer` | String | Nama developer |
+| `description` | String | Deskripsi game |
+| `image_url` | String | URL banner game |
+| `category` | String | Genre/kategori game |
 
 ---
 
@@ -441,11 +648,16 @@ Payment Progress Screen
 | **UI Framework** | Jetpack Compose (Material 3) |
 | **Architecture** | MVVM |
 | **Session Storage** | DataStore Preferences |
-| **State Management** | `remember`, `rememberSaveable`, `mutableStateOf` |
+| **HTTP Client** | Retrofit2 2.11.0 |
+| **JSON Converter** | Gson (GsonConverterFactory) |
+| **HTTP Logging** | OkHttp3 Logging Interceptor 4.12.0 |
+| **Dependency Injection** | Hilt |
+| **State Management** | `remember`, `rememberSaveable`, `MutableStateFlow`, `StateFlow` |
 | **Daftar Item** | `LazyColumn` & `LazyRow` |
 | **Dialog** | `AlertDialog` |
 | **Bottom Sheet** | `ModalBottomSheet` |
 | **Sharing** | Android Intent |
+| **Serialization** | kotlinx-serialization-json |
 | **Min SDK** | 24 |
 | **Target SDK** | 36 |
 
@@ -457,6 +669,7 @@ Payment Progress Screen
 - Android Studio Hedgehog atau terbaru
 - JDK 17+
 - Android SDK 24+
+- Backend API server berjalan di `http://localhost:8000`
 
 ### **Langkah-langkah**
 
@@ -475,7 +688,13 @@ File → Open → Pilih Folder Project
 File → Sync Project with Gradle Files
 ```
 
-4. **Run Aplikasi**
+4. **Jalankan Backend API**
+```text
+Pastikan backend API berjalan di http://localhost:8000
+Aplikasi menggunakan http://10.0.2.2:8000/api/ (emulator → localhost)
+```
+
+5. **Run Aplikasi**
 ```text
 Klik ▶ Run 'app'
 ```
@@ -511,9 +730,12 @@ https://youtube.com/shorts/TkFYY_ZmT7k
 5. Pertemuan 10
 https://youtube.com/shorts/3sYgIvGM6ds?si=8cCZ4adF4pMc62tU
 
+6. Pertemuan 11
+https://www.youtube.com/watch?v=eRgec5aUhDY
+
 ---
 
 <p align="center">
   <strong>Program Studi Informatika — Fakultas Teknologi Informasi dan Sains Data</strong><br>
-  Universitas Sebelas Maret &nbsp;·&nbsp; Mata Kuliah: Pengembangan Aplikasi Bergerak (Week 10)
+  Universitas Sebelas Maret &nbsp;·&nbsp; Mata Kuliah: Pengembangan Aplikasi Bergerak (Week 11)
 </p>
