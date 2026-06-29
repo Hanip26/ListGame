@@ -66,8 +66,6 @@ class AppDataStore(private val context: Context) {
             prefs[PreferencesKeys.favoriteGamesKey(username)] = "[]"
         }
     }
-
-<<<<<<< HEAD
     // ── RESET password via email (untuk lupa password) ───────────────────────
     suspend fun resetPasswordByEmail(
         usernameOrEmail : String,
@@ -99,8 +97,6 @@ class AppDataStore(private val context: Context) {
     }
 
     // ── Global ────────────────────────────────────────────────────────────────
-=======
->>>>>>> origin/main
     val sortOptionFlow: Flow<String> = context.dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs -> prefs[PreferencesKeys.SORT_OPTION] ?: "A-Z" }

@@ -18,13 +18,7 @@ import com.example.listgame.ui.screen.*
 import com.example.listgame.ui.theme.ListgameTheme
 import com.example.listgame.viewmodel.AppViewModel
 import com.example.listgame.viewmodel.AuthViewModel
-import com.example.listgame.ui.screen.CekTransaksiScreen
-import com.example.listgame.ui.screen.KalkulatorWinRateScreen
 import dagger.hilt.android.AndroidEntryPoint
-import com.example.listgame.ui.screen.ForgotPasswordScreen
-import com.example.listgame.ui.screen.NexusCoinTopUpScreen
-import com.example.listgame.ui.screen.NexusCoinHistoryScreen
-import com.example.listgame.ui.screen.NexusCoinRedeemScreen
 
 @AndroidEntryPoint
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -51,13 +45,20 @@ class MainActivity : ComponentActivity() {
                 val favoriteGames by appViewModel.favoriteGames.collectAsState()
                 val sortOption    by appViewModel.sortOption.collectAsState()
 
-
                 val doLogout: () -> Unit = {
                     appViewModel.setActiveUser("")
                     authViewModel.logout()
                     backStack.clear()
                     backStack.add(Route.Login)
                 }
+
+                // Helper navigasi ke Home tanpa duplikat stack
+                val goToGame: () -> Unit = {
+                    val home = backStack.filterIsInstance<Route.Home>().lastOrNull()
+                    backStack.clear()
+                    backStack.add(home ?: Route.Login)
+                }
+
                 CompositionLocalProvider(LocalBackStack provides backStack) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -69,23 +70,17 @@ class MainActivity : ComponentActivity() {
                                 label       = "NexusNavigation"
                             ) { currentRoute ->
                                 when (currentRoute) {
-                                    is Route.CekTransaksi -> {
-                                        CekTransaksiScreen(appViewModel = appViewModel)
-                                    }
 
-                                    is Route.KalkulatorWinRate -> {
-                                        KalkulatorWinRateScreen()
-                                    }
-                                    // ── Auth ──────────────────────────────
+                                    // ── Auth ──────────────────────────────────────────────
                                     is Route.Login -> {
                                         LoginScreen(
-                                            viewModel            = authViewModel,
-                                            onLoginSuccess       = { username ->
+                                            viewModel                  = authViewModel,
+                                            onLoginSuccess             = { username ->
                                                 appViewModel.setActiveUser(username)
                                                 backStack.clear()
                                                 backStack.add(Route.Home(username))
                                             },
-                                            onNavigateToRegister = { backStack.add(Route.Register) },
+                                            onNavigateToRegister       = { backStack.add(Route.Register) },
                                             onNavigateToForgotPassword = { backStack.add(Route.ForgotPassword) }
                                         )
                                     }
@@ -102,53 +97,49 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-<<<<<<< HEAD
                                     is Route.ForgotPassword -> {
                                         ForgotPasswordScreen(
                                             viewModel      = authViewModel,
                                             onResetSuccess = {
-                                                // Tampilkan snackbar sukses di LoginScreen
                                                 authViewModel.setRegisterSuccessMessage("Password berhasil direset! Silakan masuk.")
                                                 backStack.removeLastOrNull()
                                             }
                                         )
                                     }
 
-                                    // ── Home ──────────────────────────────
-=======
->>>>>>> origin/main
+                                    // ── Home / Game List ───────────────────────────────────
                                     is Route.Home -> {
                                         LaunchedEffect(currentRoute.username) {
                                             appViewModel.setActiveUser(currentRoute.username)
                                         }
                                         GameListScreen(
-                                            username              = currentRoute.username,
-                                            favoriteGames         = favoriteGames,
-                                            sortOption            = sortOption,
-                                            onSortChange          = { appViewModel.saveSortOption(it) },
-                                            onFavoriteToggle      = { appViewModel.toggleFavorite(it) },
-                                            onClearFavorites      = { appViewModel.clearFavorites() },
-                                            onLogout              = doLogout,
-                                            onNavigateToDashboard = { backStack.add(Route.Dashboard) },
-                                            onNavigateToProfile   = { backStack.add(Route.Profile) },
+                                            username                = currentRoute.username,
+                                            favoriteGames           = favoriteGames,
+                                            sortOption              = sortOption,
+                                            onSortChange            = { appViewModel.saveSortOption(it) },
+                                            onFavoriteToggle        = { appViewModel.toggleFavorite(it) },
+                                            onClearFavorites        = { appViewModel.clearFavorites() },
+                                            onLogout                = doLogout,
+                                            onNavigateToDashboard   = { backStack.add(Route.Dashboard) },
+                                            onNavigateToProfile     = { backStack.add(Route.Profile) },
                                             sharedTransitionScope   = this@SharedTransitionLayout,
                                             animatedVisibilityScope = this@AnimatedContent
                                         )
                                     }
 
+                                    // ── Dashboard ─────────────────────────────────────────
                                     is Route.Dashboard -> {
                                         DashboardScreen(
                                             authViewModel       = authViewModel,
                                             appViewModel        = appViewModel,
                                             onNavigateToProfile = { backStack.add(Route.Profile) },
-                                            onLogout            = doLogout
+                                            onLogout            = doLogout,
+                                            onNavigateToGame    = goToGame,
+                                            onNavigateToCek     = { backStack.add(Route.CekTransaksi) }
                                         )
                                     }
 
-<<<<<<< HEAD
-                                    // ── Profil (SUDAH DIPERBAIKI SINKRONISASINYA) ──
-=======
->>>>>>> origin/main
+                                    // ── Profile ───────────────────────────────────────────
                                     is Route.Profile -> {
                                         ProfileScreen(
                                             authViewModel = authViewModel,
@@ -157,6 +148,22 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
+                                    // ── Cek Transaksi ─────────────────────────────────────
+                                    is Route.CekTransaksi -> {
+                                        CekTransaksiScreen(
+                                            appViewModel          = appViewModel,
+                                            onNavigateToGame      = goToGame,
+                                            onNavigateToNexusCoin = { backStack.add(Route.NexusCoinHistory) },
+                                            onNavigateToDashboard = { backStack.add(Route.Dashboard) }
+                                        )
+                                    }
+
+                                    // ── Kalkulator ────────────────────────────────────────
+                                    is Route.KalkulatorWinRate -> {
+                                        KalkulatorWinRateScreen()
+                                    }
+
+                                    // ── Game Detail & TopUp ───────────────────────────────
                                     is Route.Detail -> {
                                         GameDetailScreen(
                                             gameId                  = currentRoute.gameId,
@@ -183,16 +190,22 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
+                                    // ── NEXUS Coin ────────────────────────────────────────
+                                    is Route.NexusCoinHistory -> {
+                                        NexusCoinHistoryScreen(
+                                            appViewModel          = appViewModel,
+                                            onNavigateToGame      = goToGame,
+                                            onNavigateToCek       = { backStack.add(Route.CekTransaksi) },
+                                            onNavigateToDashboard = { backStack.add(Route.Dashboard) }
+                                        )
+                                    }
+
                                     is Route.NexusCoinTopUp -> {
                                         NexusCoinTopUpScreen(appViewModel = appViewModel)
                                     }
 
                                     is Route.NexusCoinRedeem -> {
                                         NexusCoinRedeemScreen(appViewModel = appViewModel)
-                                    }
-
-                                    is Route.NexusCoinHistory -> {
-                                        NexusCoinHistoryScreen(appViewModel = appViewModel)
                                     }
 
                                     null -> {}

@@ -3,6 +3,8 @@ package com.example.listgame.ui.screen
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,9 +14,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -22,7 +24,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -33,13 +38,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.listgame.R
 import com.example.listgame.model.Game
+import com.example.listgame.model.GameApiViewModel
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
-import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.listgame.model.GameApiViewModel
-import com.example.listgame.R
+import com.example.listgame.ui.components.BottomNavBar
+import com.example.listgame.ui.components.BottomNavDestination
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -61,55 +68,53 @@ fun GameListScreen(
     var searchQuery      by rememberSaveable { mutableStateOf("") }
     var isWishlistMode   by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf("Semua") }
+
     val gameApiViewModel: GameApiViewModel = viewModel()
     val apiGames by gameApiViewModel.games.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         gameApiViewModel.loadGames()
     }
+
     val categories = listOf(
         "Semua", "MOBA", "Battle Royale", "RPG", "FPS", "Sandbox", "Deduksi sosial"
     )
 
-    // ── Dialog & Menu state ───────────────────────────────────────────────────
-    var showLogoutDialog       by remember { mutableStateOf(false) }
-    var showClearWishlistDialog by remember { mutableStateOf(false) }
     var showSortDialog         by remember { mutableStateOf(false) }
-    var gameToRemove           by remember { mutableStateOf<Game?>(null) }
+    var showDropdownMenu       by remember { mutableStateOf(false) }
 
-    // ✅ State untuk DropdownMenu titik tiga
-    var showDropdownMenu by remember { mutableStateOf(false) }
     val games = apiGames.map { apiGame ->
-
         Game(
             id = apiGame.id,
             title = apiGame.title,
             developer = apiGame.developer,
             description = apiGame.description,
-
-            rating = 4.5,
-            size = "-",
+            rating = 4.7, // Dioptimalkan untuk visualisasi rating badge kompetisi
+            size = "1.2 GB",
             genres = listOf(apiGame.category),
             latestUpdate = "-",
-
             imageRes = when(apiGame.image_url){
                 "mlbb" -> R.drawable.mlbb
                 "ff" -> R.drawable.ff
                 "pubg" -> R.drawable.pubg
                 "genshin" -> R.drawable.gensin
+                "roblox" -> R.drawable.roblox
+                "cod" ->R.drawable.cod
+                "among" ->R.drawable.amoung
                 else -> R.drawable.mlbb
             },
-
             topUpOptions = emptyList()
         )
     }
-    // ── Filter & Sort ─────────────────────────────────────────────────────────
+
     val filteredGames = games.filter { game ->
         val matchesSearch   = game.title.contains(searchQuery, ignoreCase = true)
         val matchesWishlist = if (isWishlistMode) favoriteGames.contains(game.id) else true
         val matchesCategory = if (selectedCategory == "Semua") true
-        else game.genres.any {
-            it.contains(selectedCategory, ignoreCase = true)
-        }
+        else game.genres.any { it.contains(selectedCategory, ignoreCase = true) }
         matchesSearch && matchesWishlist && matchesCategory
     }.let { list ->
         when (sortOption) {
@@ -120,12 +125,11 @@ fun GameListScreen(
         }
     }
 
-    // ── Dialog: Sort ──────────────────────────────────────────────────────────
     if (showSortDialog) {
         val radioOptions = listOf("A-Z", "Z-A", "Rating Tertinggi")
         AlertDialog(
             onDismissRequest = { showSortDialog = false },
-            title = { Text("Urutkan Game", fontWeight = FontWeight.Bold) },
+            title = { Text("Urutkan Katalog", fontWeight = FontWeight.Bold) },
             text = {
                 Column(Modifier.selectableGroup()) {
                     radioOptions.forEach { text ->
@@ -154,290 +158,204 @@ fun GameListScreen(
         )
     }
 
-    // ── Dialog: Logout ────────────────────────────────────────────────────────
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Konfirmasi Logout") },
-            text  = { Text("Yakin ingin keluar dari akun ini?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showLogoutDialog = false
-                    onLogout()
-                }) { Text("Keluar", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) { Text("Batal") }
-            }
-        )
-    }
-
-    // ── Dialog: Hapus satu favorit ────────────────────────────────────────────
-    if (gameToRemove != null) {
-        AlertDialog(
-            onDismissRequest = { gameToRemove = null },
-            title = { Text("Hapus Favorit") },
-            text  = { Text("Hapus '${gameToRemove?.title}' dari favorit?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    gameToRemove?.let { onFavoriteToggle(it.id) }
-                    gameToRemove = null
-                }) { Text("Hapus", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { gameToRemove = null }) { Text("Batal") }
-            }
-        )
-    }
-
-    // ── Dialog: Kosongkan wishlist ────────────────────────────────────────────
-    if (showClearWishlistDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearWishlistDialog = false },
-            title = { Text("Kosongkan Wishlist") },
-            text  = { Text("Hapus semua game dari favorit?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    onClearFavorites()
-                    showClearWishlistDialog = false
-                }) { Text("Hapus", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearWishlistDialog = false }) { Text("Batal") }
-            }
-        )
-    }
-
-    // ── Scaffold ──────────────────────────────────────────────────────────────
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        if (isWishlistMode) "Wishlist Saya" else "NEXUS",
-                        fontWeight = FontWeight.Bold
+                        text = if (isWishlistMode) "WISHLIST SAYA" else "NEXUS STORE",
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp,
+                        style = MaterialTheme.typography.titleMedium
                     )
                 },
                 actions = {
-                    // ✅ Hanya 2 ikon di TopAppBar: Wishlist + Titik Tiga
-                    // Ikon Wishlist — tetap visible karena sering dipakai
                     IconButton(onClick = { isWishlistMode = !isWishlistMode }) {
                         Icon(
-                            imageVector = if (isWishlistMode) Icons.Rounded.Favorite
-                            else Icons.Rounded.FavoriteBorder,
-                            tint = if (isWishlistMode) Color.Red
-                            else MaterialTheme.colorScheme.onSurface,
-                            contentDescription = "Wishlist"
+                            imageVector = if (isWishlistMode) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            tint = if (isWishlistMode) Color(0xFFE91E63) else MaterialTheme.colorScheme.onSurface,
+                            contentDescription = "Wishlist Toggle"
                         )
                     }
 
-                    // ✅ Tombol titik tiga — semua opsi lain masuk ke sini
                     Box {
                         IconButton(onClick = { showDropdownMenu = true }) {
-                            Icon(
-                                Icons.Rounded.MoreVert,
-                                contentDescription = "Menu",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                            Icon(Icons.Rounded.MoreVert, contentDescription = "Menu Utilities")
                         }
 
-                        // ✅ DropdownMenu — muncul dari titik tiga
                         DropdownMenu(
                             expanded        = showDropdownMenu,
                             onDismissRequest = { showDropdownMenu = false },
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                 .width(220.dp)
                         ) {
-                            // ── Grup 1: Fitur utama ───────────────────────
-                            MenuSectionLabel("Fitur")
-
-                            // ✅ GANTI Top Up → Kalkulator Win Rate
+                            MenuSectionLabel("Fitur NEXUS")
                             NexusMenuItem(
                                 icon     = Icons.Rounded.Calculate,
                                 label    = "Kalkulator Win Rate",
-                                onClick  = {
-                                    showDropdownMenu = false
-                                    backStack.add(Route.KalkulatorWinRate)
-                                }
+                                onClick  = { showDropdownMenu = false; backStack.add(Route.KalkulatorWinRate) }
                             )
-
                             NexusMenuItem(
                                 icon    = Icons.AutoMirrored.Rounded.List,
-                                label   = "Urutkan Game",
-                                onClick = {
-                                    showDropdownMenu = false
-                                    showSortDialog   = true
-                                }
+                                label   = "Urutkan Katalog",
+                                onClick = { showDropdownMenu = false; showSortDialog = true }
                             )
-
-                            // ✅ Cek Transaksi — navigasi ke screen baru
-                            NexusMenuItem(
-                                icon    = Icons.Rounded.Receipt,
-                                label   = "Cek Transaksi",
-                                onClick = {
-                                    showDropdownMenu = false
-                                    backStack.add(Route.CekTransaksi)
-                                }
-                            )
-
-                            // ── Divider ───────────────────────────────────
                             HorizontalDivider(
-                                modifier  = Modifier.padding(vertical = 4.dp),
-                                color     = MaterialTheme.colorScheme.outlineVariant
+                                modifier  = Modifier.padding(vertical = 6.dp),
+                                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                             )
-
-                            // ── Grup 2: Akun ──────────────────────────────
-                            MenuSectionLabel("Akun")
-
-                            NexusMenuItem(
-                                icon    = Icons.Rounded.Dashboard,
-                                label   = "Dashboard",
-                                onClick = {
-                                    showDropdownMenu = false
-                                    onNavigateToDashboard()
-                                }
-                            )
-
+                            MenuSectionLabel("Akun Pengguna")
                             NexusMenuItem(
                                 icon    = Icons.Rounded.AccountCircle,
-                                label   = "Profil",
-                                onClick = {
-                                    showDropdownMenu = false
-                                    onNavigateToProfile()
-                                }
-                            )
-
-                            NexusMenuItem(
-                                icon     = Icons.Rounded.MonetizationOn,
-                                label    = "Nexus Coin",
-                                subLabel = "Bebas Biaya Admin",
-                                iconTint = Color(0xFFFFD700),
-                                onClick  = {
-                                    showDropdownMenu = false
-                                    backStack.add(Route.NexusCoinHistory)
-                                }
-                            )
-
-                            // ── Divider ───────────────────────────────────
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                color    = MaterialTheme.colorScheme.outlineVariant
-                            )
-
-                            // ── Wishlist clear (kondisional) ──────────────
-                            if (isWishlistMode && favoriteGames.isNotEmpty()) {
-                                NexusMenuItem(
-                                    icon     = Icons.Rounded.Delete,
-                                    label    = "Kosongkan Wishlist",
-                                    iconTint = MaterialTheme.colorScheme.error,
-                                    labelColor = MaterialTheme.colorScheme.error,
-                                    onClick  = {
-                                        showDropdownMenu      = false
-                                        showClearWishlistDialog = true
-                                    }
-                                )
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 4.dp),
-                                    color    = MaterialTheme.colorScheme.outlineVariant
-                                )
-                            }
-
-                            // ── Logout ────────────────────────────────────
-                            NexusMenuItem(
-                                icon       = Icons.AutoMirrored.Rounded.ExitToApp,
-                                label      = "Keluar",
-                                iconTint   = MaterialTheme.colorScheme.error,
-                                labelColor = MaterialTheme.colorScheme.error,
-                                onClick    = {
-                                    showDropdownMenu = false
-                                    showLogoutDialog = true
-                                }
+                                label   = "Profil Pengguna",
+                                onClick = { showDropdownMenu = false; onNavigateToProfile() }
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = Color.Transparent // Borderless blend transparan yang bersih
                 )
             )
+        },
+        bottomBar = {
+            BottomNavBar(current = BottomNavDestination.GAME) { dest ->
+                when (dest) {
+                    BottomNavDestination.GAME          -> { }
+                    BottomNavDestination.CEK_TRANSAKSI -> backStack.add(Route.CekTransaksi)
+                    BottomNavDestination.NEXUS_COIN    -> backStack.add(Route.NexusCoinHistory)
+                    BottomNavDestination.DASHBOARD     -> onNavigateToDashboard()
+                }
+            }
         }
     ) { innerPadding ->
-        Column(modifier = modifier.fillMaxSize().padding(innerPadding)) {
-            Text(
-                text      = "Hallo $username, cari game apa?",
-                style     = MaterialTheme.typography.bodyLarge,
-                modifier  = Modifier.fillMaxWidth().padding(16.dp),
-                textAlign = TextAlign.Center
-            )
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+        ) {
+            // Immersive Greeting Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Selamat Datang, $username!",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = "Temukan Game Favoritmu Sekarang.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
+            // High Fidelity Search Bar Component
             OutlinedTextField(
-                value         = searchQuery,
+                value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier      = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                placeholder   = { Text("Cari game...") },
-                leadingIcon   = { Icon(Icons.Rounded.Search, null) },
-                shape         = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                placeholder = { Text("Cari judul game atau developer...") },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Rounded.Cancel, contentDescription = "Clear Input Text")
+                        }
+                    }
+                },
+                shape = CircleShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                singleLine = true
             )
 
+            // Dynamic Category Filter System
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding        = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 modifier              = Modifier.fillMaxWidth()
             ) {
                 items(categories) { category ->
+                    val isSelected = selectedCategory == category
                     FilterChip(
-                        selected = (selectedCategory == category),
+                        selected = isSelected,
                         onClick  = { selectedCategory = category },
-                        label    = { Text(category) },
+                        label    = { Text(category, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors   = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor     = MaterialTheme.colorScheme.onPrimaryContainer
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor     = MaterialTheme.colorScheme.onPrimary,
+                            containerColor         = MaterialTheme.colorScheme.surfaceContainerLow // Parameter yang sudah diperbaiki
+                        ),
+                        shape = CircleShape,
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            selectedBorderColor = Color.Transparent
                         )
                     )
                 }
             }
 
+            // Real-Time Content Lazy List Wrapper
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding      = PaddingValues(
-                    start = 16.dp, end = 16.dp, bottom = 16.dp
-                ),
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding      = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                modifier            = Modifier.fillMaxSize()
             ) {
-                if (filteredGames.isEmpty()) {
+                if (apiGames.isEmpty() && searchQuery.isBlank()) {
+                    items(6) { ShimmerGameListItem() }
+                }
+                else if (filteredGames.isEmpty()) {
                     item {
                         Column(
                             modifier            = Modifier
                                 .fillParentMaxSize()
-                                .padding(32.dp),
+                                .padding(40.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
                             val isWishlistEmpty = isWishlistMode && favoriteGames.isEmpty()
                             Icon(
-                                imageVector = if (isWishlistEmpty)
-                                    Icons.Rounded.FavoriteBorder
-                                else Icons.Rounded.Search,
+                                imageVector = if (isWishlistEmpty) Icons.Rounded.HeartBroken else Icons.Rounded.SearchOff,
                                 contentDescription = null,
-                                modifier           = Modifier.size(100.dp),
-                                tint               = MaterialTheme.colorScheme.primary
-                                    .copy(alpha = 0.5f)
+                                modifier           = Modifier.size(80.dp),
+                                tint               = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                             )
-                            Spacer(Modifier.height(24.dp))
+                            Spacer(Modifier.height(20.dp))
                             Text(
-                                text       = if (isWishlistEmpty) "Wishlist Masih Kosong"
-                                else "Game Tidak Ditemukan",
+                                text       = if (isWishlistEmpty) "Wishlist Masih Kosong" else "Hasil Tidak Ditemukan",
                                 style      = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                textAlign  = TextAlign.Center
+                                fontWeight = FontWeight.Bold
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 text      = if (isWishlistEmpty)
-                                    "Kamu belum menambahkan game apa pun. Klik ikon hati pada daftar game untuk menyimpannya ke sini."
+                                    "Ketuk ikon hati pada item katalog game premium kami untuk menambahkannya ke folder koleksi pribadi Anda."
                                 else
-                                    "Maaf, tidak ada game dengan kategori atau kata kunci tersebut.",
+                                    "Coba periksa kembali ejaan kata kunci Anda atau beralihlah ke filter kategori katalog yang lain.",
                                 style     = MaterialTheme.typography.bodyMedium,
                                 color     = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -451,8 +369,20 @@ fun GameListScreen(
                             game                    = game,
                             isFavorite              = isFav,
                             onFavoriteClick         = {
-                                if (isFav) gameToRemove = game
-                                else onFavoriteToggle(game.id)
+                                onFavoriteToggle(game.id)
+                                if (isFav) {
+                                    coroutineScope.launch {
+                                        snackbarHostState.currentSnackbarData?.dismiss()
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "${game.title} dilepas dari wishlist",
+                                            actionLabel = "Batal Undo",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            onFavoriteToggle(game.id)
+                                        }
+                                    }
+                                }
                             },
                             sharedTransitionScope   = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
@@ -467,81 +397,109 @@ fun GameListScreen(
     }
 }
 
-// ── Komponen: Label Section di Dropdown ──────────────────────────────────────
+// ── Modifier Shimmer Engine (Zero Layout Shifting) ──────────────────────────
+
+fun Modifier.shimmerEffect(): Modifier = composed {
+    val transition = rememberInfiniteTransition(label = "shimmer_root")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1200f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1300, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer_interpolation"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(translateAnim, translateAnim)
+    )
+    this.background(brush)
+}
+
+// ── High Fidelity Skeleton Loading Item Component ───────────────────────────
+
+@Composable
+fun ShimmerGameListItem() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .shimmerEffect()
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.fillMaxWidth(0.5f).height(20.dp).clip(CircleShape).shimmerEffect())
+                Spacer(Modifier.height(6.dp))
+                Box(modifier = Modifier.fillMaxWidth(0.3f).height(14.dp).clip(CircleShape).shimmerEffect())
+                Spacer(Modifier.height(10.dp))
+                Box(modifier = Modifier.fillMaxWidth(0.8f).height(12.dp).clip(CircleShape).shimmerEffect())
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.height(88.dp).padding(vertical = 4.dp)
+            ) {
+                Box(modifier = Modifier.size(28.dp).clip(CircleShape).shimmerEffect())
+                Box(modifier = Modifier.size(20.dp).clip(CircleShape).shimmerEffect())
+            }
+        }
+    }
+}
 
 @Composable
 fun MenuSectionLabel(title: String) {
     Text(
-        text     = title,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
+        text     = title.uppercase(),
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 1.sp,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(
-            start = 16.dp, end = 16.dp,
-            top = 8.dp, bottom = 2.dp
-        )
+        modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 4.dp)
     )
 }
-
-// ── Komponen: Item Menu Dropdown ──────────────────────────────────────────────
 
 @Composable
 fun NexusMenuItem(
     icon: ImageVector,
     label: String,
-    subLabel: String   = "",
-    iconTint: Color    = Color.Unspecified,
-    labelColor: Color  = Color.Unspecified,
     onClick: () -> Unit
 ) {
     DropdownMenuItem(
         text = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Ikon dengan background bulat
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (iconTint == Color.Unspecified)
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            else
-                                iconTint.copy(alpha = 0.12f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = if (iconTint == Color.Unspecified)
-                            MaterialTheme.colorScheme.primary
-                        else iconTint,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // Label & subLabel
-                Column {
-                    Text(
-                        text = label,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (labelColor == Color.Unspecified)
-                            MaterialTheme.colorScheme.onSurface
-                        else labelColor
-                    )
-                    if (subLabel.isNotEmpty()) {
-                        Text(
-                            text = subLabel,
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = label,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         },
         onClick = onClick,
@@ -549,7 +507,7 @@ fun NexusMenuItem(
     )
 }
 
-// ── GameListItem ──────────────────────────────────────────────────────────────
+// ── Production-Grade Game Card List Item Component ──────────────────────────
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -563,59 +521,111 @@ fun GameListItem(
 ) {
     Card(
         modifier  = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors    = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.7f) // Glassmorphism layer treatment
+        ),
+        shape = RoundedCornerShape(20.dp), // Premium Smooth Corner Radius
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier          = Modifier.padding(16.dp)
+            modifier          = Modifier.padding(12.dp)
         ) {
             with(sharedTransitionScope) {
                 Image(
                     painter            = painterResource(id = game.imageRes),
-                    contentDescription = null,
+                    contentDescription = "Artwork ${game.title}",
                     contentScale       = ContentScale.Crop,
                     modifier           = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(88.dp) // Menggunakan structural budget yang pas untuk item list data kompleks
+                        .clip(RoundedCornerShape(14.dp))
                         .sharedElement(
-                            sharedContentState      = rememberSharedContentState(
-                                key = "image_${game.id}"
-                            ),
+                            sharedContentState      = rememberSharedContentState(key = "image_${game.id}"),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
                 )
             }
+
             Spacer(Modifier.width(16.dp))
+
             Column(modifier = Modifier.weight(1f)) {
+                // Inline Title & Metadata Layout Section
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = game.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    // INTERNATIONAL UX FEATURE: Micro Badge Rating System
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f), CircleShape)
+                            .padding(horizontal = 6.dp, vertical = 2.getDp())
+                    ) {
+                        Icon(Icons.Rounded.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(12.dp))
+                        Spacer(Modifier.width(2.dp))
+                        Text(game.rating.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, fontSize = 10.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
+
                 Text(
-                    game.title,
-                    style      = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    game.developer,
-                    style = MaterialTheme.typography.labelLarge,
+                    text = game.developer,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
+
+                Spacer(Modifier.height(8.dp))
+
                 Text(
-                    game.description,
-                    style    = MaterialTheme.typography.bodyMedium,
+                    text = game.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
             }
-            IconButton(onClick = onFavoriteClick) {
+
+            Spacer(Modifier.width(12.dp))
+
+            // Interactive Command Layout Side Panel Block
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.height(88.dp).padding(vertical = 4.dp)
+            ) {
+                IconButton(
+                    onClick = onFavoriteClick,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        tint        = if (isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentDescription = "Bookmark",
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
                 Icon(
-                    imageVector = if (isFavorite) Icons.Rounded.Favorite
-                    else Icons.Rounded.FavoriteBorder,
-                    tint        = if (isFavorite) Color.Red
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    contentDescription = null
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = "Navigate details",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
     }
 }
+
+// Inline helper extension function untuk mereduksi noise matematis LaTeX padding di Jetpack Compose
+private fun Int.getDp() = this.dp

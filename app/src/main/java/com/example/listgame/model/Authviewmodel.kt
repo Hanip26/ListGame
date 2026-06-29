@@ -107,6 +107,16 @@ class AuthViewModel @Inject constructor(
     val loggedInUsername: StateFlow<String> = repository.loggedInUsername
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
+    init {
+        viewModelScope.launch {
+            loggedInUsername.collect { username ->
+                if (username.isNotBlank()) {
+                    repository.refreshProfile(username)
+                }
+            }
+        }
+    }
+
     val currentUser: StateFlow<User?> = repository.currentUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -229,7 +239,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-<<<<<<< HEAD
     // ── Forgot Password state ─────────────────────────────────────────────────────
     private val _forgotState = MutableStateFlow(ForgotPasswordUiState())
     val forgotState: StateFlow<ForgotPasswordUiState> = _forgotState.asStateFlow()
@@ -325,8 +334,6 @@ class AuthViewModel @Inject constructor(
     }
 
     // ── Ubah password ─────────────────────────────────────────────────────────
-=======
->>>>>>> origin/main
     fun onCurrentPasswordChange(v: String) =
         _profileState.update { it.copy(currentPassword = v, passwordError = null, passwordSuccess = null) }
     fun onNewPasswordChange(v: String) =

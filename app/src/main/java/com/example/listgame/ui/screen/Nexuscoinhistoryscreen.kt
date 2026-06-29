@@ -24,6 +24,8 @@ import com.example.listgame.model.NexusCoinTransactionStatus
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
 import com.example.listgame.viewmodel.AppViewModel
+import com.example.listgame.ui.components.BottomNavBar
+import com.example.listgame.ui.components.BottomNavDestination
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,7 +34,12 @@ private val NexusDark = Color(0xFF1A1A2E)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NexusCoinHistoryScreen(appViewModel: AppViewModel) {
+fun NexusCoinHistoryScreen(
+    appViewModel          : AppViewModel,
+    onNavigateToGame      : () -> Unit = {},
+    onNavigateToCek       : () -> Unit = {},
+    onNavigateToDashboard : () -> Unit = {}
+) {
     val backStack         = LocalBackStack.current
     val balance           by appViewModel.nexusCoinBalance.collectAsState()
     val history           by appViewModel.nexusCoinHistory.collectAsState()
@@ -67,6 +74,16 @@ fun NexusCoinHistoryScreen(appViewModel: AppViewModel) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
+        },
+        bottomBar = {
+            BottomNavBar(current = BottomNavDestination.NEXUS_COIN) { dest ->
+                when (dest) {
+                    BottomNavDestination.GAME          -> onNavigateToGame()
+                    BottomNavDestination.CEK_TRANSAKSI -> onNavigateToCek()
+                    BottomNavDestination.NEXUS_COIN    -> { }
+                    BottomNavDestination.DASHBOARD     -> onNavigateToDashboard()
+                }
+            }
         }
     ) { innerPadding ->
         LazyColumn(

@@ -2,60 +2,53 @@ package com.example.listgame.data
 
 import com.example.listgame.model.User
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import java.security.MessageDigest
 import com.example.listgame.data.ResetPasswordResult
 import com.example.listgame.model.api.LoginRequest
+import com.example.listgame.model.api.ChangePasswordRequest
+import com.example.listgame.model.api.UpdateProfileRequest
 import com.example.listgame.network.RetrofitClient
 import com.example.listgame.model.api.RegisterRequest
-
+import com.example.listgame.model.api.CheckUserRequest
+import com.example.listgame.model.api.ResetPasswordApiRequest
 
 class UserRepository(private val dataStore: AppDataStore) {
 
     val isLoggedIn      : Flow<Boolean> = dataStore.isLoggedInFlow
     val loggedInUsername: Flow<String>  = dataStore.loggedInUsernameFlow
 
-    val currentUser: Flow<User?> = combine(
-        dataStore.loggedInUsernameFlow,
-        dataStore.registeredUsersFlow
-    ) { username, users ->
-        if (username.isBlank()) null
-        else users.find { it.username.equals(username, ignoreCase = true) }
-    }
+    // ── Profil sekarang dari API, bukan dataStore lokal ────────────────────
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: Flow<User?> = _currentUser
 
-    suspend fun register(
-        username   : String,
-        email      : String,
-        password   : String,
-        displayName: String
-    ): RegisterResult = dataStore.registerUser(
-        User(
-            username     = username.trim(),
-            email        = email.trim().lowercase(),
-            passwordHash = hashPassword(password),
-            displayName  = displayName.trim()
-        )
-    )
-
-    suspend fun login(usernameOrEmail: String, password: String): LoginResult {
-        val users = dataStore.registeredUsersFlow.first()
-        val input = usernameOrEmail.trim()
-        val user  = users.find {
-            it.username.equals(input, ignoreCase = true) ||
-                    it.email.equals(input, ignoreCase = true)
-        } ?: return LoginResult.UserNotFound
-
-        return if (user.passwordHash == hashPassword(password)) {
-            dataStore.saveLoginSession(user.username)
-            LoginResult.Success(user.username, user.displayName)
-        } else {
-            LoginResult.WrongPassword
+    suspend fun refreshProfile(username: String) {
+        if (username.isBlank()) {
+            _currentUser.value = null
+            return
+        }
+        try {
+            val response = RetrofitClient.api.getProfile(username)
+            if (response.isSuccessful && response.body()?.success == true) {
+                val apiUser = response.body()?.user
+                if (apiUser != null) {
+                    _currentUser.value = User(
+                        username     = apiUser.name,
+                        email        = apiUser.email,
+                        passwordHash = "",
+                        displayName  = apiUser.display_name ?: apiUser.name,
+                        phone        = apiUser.phone ?: "",
+                        bio          = apiUser.bio ?: ""
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            // biarkan currentUser apa adanya kalau request gagal
         }
     }
 
     suspend fun logout() = dataStore.clearLoginSession()
-
 
     suspend fun updateProfile(
         username   : String,
@@ -63,28 +56,71 @@ class UserRepository(private val dataStore: AppDataStore) {
         email      : String,
         phone      : String,
         bio        : String
-    ): UpdateProfileResult = dataStore.updateUserProfile(username, displayName, email, phone, bio)
+    ): UpdateProfileResult {
+        return try {
+            val response = RetrofitClient.api.updateProfile(
+                UpdateProfileRequest(
+                    username = username,
+                    display_name = displayName,
+                    email = email,
+                    phone = phone,
+                    bio = bio
+                )
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                refreshProfile(username)
+                UpdateProfileResult.Success
+            } else {
+                UpdateProfileResult.EmailTaken
+            }
+        } catch (e: Exception) {
+            UpdateProfileResult.UserNotFound
+        }
+    }
 
-<<<<<<< HEAD
     suspend fun resetPassword(
         usernameOrEmail: String,
-        newPassword    : String
-    ): ResetPasswordResult = dataStore.resetPasswordByEmail(
-        usernameOrEmail = usernameOrEmail,
-        newHash         = hashPassword(newPassword)
-    )
-    // ── Password ──────────────────────────────────────────────────────────────
-=======
->>>>>>> origin/main
+        newPassword: String
+    ): ResetPasswordResult {
+        return try {
+            val response = RetrofitClient.api.resetPasswordApi(
+                ResetPasswordApiRequest(
+                    usernameOrEmail = usernameOrEmail.trim(),
+                    newPassword = newPassword
+                )
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                ResetPasswordResult.Success
+            } else {
+                ResetPasswordResult.UserNotFound
+            }
+        } catch (e: Exception) {
+            ResetPasswordResult.UserNotFound
+        }
+    }
+
     suspend fun changePassword(
         username       : String,
         currentPassword: String,
         newPassword    : String
-    ): ChangePasswordResult = dataStore.updatePassword(
-        username    = username,
-        currentHash = hashPassword(currentPassword),
-        newHash     = hashPassword(newPassword)
-    )
+    ): ChangePasswordResult {
+        return try {
+            val response = RetrofitClient.api.changePasswordApi(
+                ChangePasswordRequest(
+                    username = username,
+                    current_password = currentPassword,
+                    new_password = newPassword
+                )
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                ChangePasswordResult.Success
+            } else {
+                ChangePasswordResult.WrongCurrentPassword
+            }
+        } catch (e: Exception) {
+            ChangePasswordResult.UserNotFound
+        }
+    }
 
     fun hashPassword(password: String): String {
         val bytes = MessageDigest
@@ -92,24 +128,25 @@ class UserRepository(private val dataStore: AppDataStore) {
             .digest(password.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it) }
     }
-    // Tambahkan di dalam class UserRepository
+
     suspend fun checkUserExists(usernameOrEmail: String): Boolean {
-        val users = dataStore.registeredUsersFlow.first()
-        val input = usernameOrEmail.trim()
-        return users.any {
-            it.username.equals(input, ignoreCase = true) ||
-                    it.email.equals(input, ignoreCase = true)
+        return try {
+            val response = RetrofitClient.api.checkUser(
+                CheckUserRequest(usernameOrEmail = usernameOrEmail.trim())
+            )
+            response.isSuccessful && response.body()?.exists == true
+        } catch (e: Exception) {
+            false
         }
     }
+
     suspend fun registerApi(
         username: String,
         email: String,
         password: String,
         displayName: String
     ): RegisterResult {
-
         return try {
-
             val response =
                 RetrofitClient.api.register(
                     RegisterRequest(
@@ -119,61 +156,37 @@ class UserRepository(private val dataStore: AppDataStore) {
                         display_name = displayName
                     )
                 )
-
-            if (
-                response.isSuccessful &&
-                response.body()?.success == true
-            ) {
+            if (response.isSuccessful && response.body()?.success == true) {
                 RegisterResult.Success
             } else {
                 RegisterResult.EmailTaken
             }
-
         } catch (e: Exception) {
             RegisterResult.EmailTaken
         }
     }
+
     suspend fun loginApi(
         email: String,
         password: String
     ): LoginResult {
-
         return try {
-
             val response = RetrofitClient.api.login(
-                LoginRequest(
-                    email = email,
-                    password = password
-                )
+                LoginRequest(email = email, password = password)
             )
-
-            if (
-                response.isSuccessful &&
-                response.body()?.success == true
-            ) {
-
+            if (response.isSuccessful && response.body()?.success == true) {
                 val user = response.body()?.user
-
                 if (user != null) {
-
-                    dataStore.saveLoginSession(
-                        user.name
-                    )
-
-                    LoginResult.Success(
-                        user.name,
-                        user.name
-                    )
+                    dataStore.saveLoginSession(user.name)
+                    refreshProfile(user.name)
+                    LoginResult.Success(user.name, user.name)
                 } else {
                     LoginResult.UserNotFound
                 }
-
             } else {
                 LoginResult.WrongPassword
             }
-
         } catch (e: Exception) {
-
             LoginResult.UserNotFound
         }
     }

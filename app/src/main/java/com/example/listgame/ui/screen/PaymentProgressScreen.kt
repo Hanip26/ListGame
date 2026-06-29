@@ -32,6 +32,7 @@ import com.example.listgame.model.TransactionStatus
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
 import com.example.listgame.viewmodel.AppViewModel
+import com.example.listgame.viewmodel.TransactionViewModel
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,7 +48,9 @@ fun PaymentProgressScreen(
 ) {
     val backStack = LocalBackStack.current
     val game      = DummyData.popularGames.find { it.id == route.gameId }
-
+    val transactionViewModel = remember {
+        TransactionViewModel()
+    }
     var currentStep    by remember { mutableStateOf(TxStep.CREATED) }
     var isPaymentDone  by remember { mutableStateOf(false) }
     var completionTime by remember { mutableStateOf("") }
@@ -78,6 +81,15 @@ fun PaymentProgressScreen(
         delay(3_000L)
 
         currentStep   = TxStep.DONE
+        transactionViewModel.createTransaction(
+            invoiceId = invoiceNumber,
+            username = route.username,
+            gameName = game?.title ?: "",
+            playerId = route.playerId,
+            amount = route.amount,
+            price = route.totalPrice,
+            paymentMethod = route.paymentName
+        )
         isPaymentDone = true
         completionTime = SimpleDateFormat(
             "yyyy/MM/dd HH:mm:ss", Locale.getDefault()

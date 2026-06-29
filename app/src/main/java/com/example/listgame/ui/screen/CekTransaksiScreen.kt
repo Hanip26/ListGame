@@ -2,9 +2,11 @@ package com.example.listgame.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // Tambahan import
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll // Tambahan import
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -24,30 +26,81 @@ import androidx.compose.ui.unit.sp
 import com.example.listgame.model.Transaction
 import com.example.listgame.model.TransactionStatus
 import com.example.listgame.navigation.LocalBackStack
+import com.example.listgame.network.HistoryRepository
 import com.example.listgame.viewmodel.AppViewModel
+import com.example.listgame.ui.components.BottomNavBar
+import com.example.listgame.ui.components.BottomNavDestination
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CekTransaksiScreen(appViewModel: AppViewModel) {
+fun CekTransaksiScreen(
+    appViewModel: AppViewModel,
+    onNavigateToGame      : () -> Unit = {},
+    onNavigateToNexusCoin : () -> Unit = {},
+    onNavigateToDashboard : () -> Unit = {}
+)  {
     val backStack      = LocalBackStack.current
-    val transactions   by appViewModel.transactions.collectAsState()
     val clipboardManager = LocalClipboardManager.current
     val keyboardCtrl   = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+    val repository     = remember { HistoryRepository() }
 
     var invoiceInput   by remember { mutableStateOf("") }
     var searchResult   by remember { mutableStateOf<Transaction?>(null) }
     var notFound       by remember { mutableStateOf(false) }
     var hasSearched    by remember { mutableStateOf(false) }
+    var isLoading      by remember { mutableStateOf(false) }
+
+    // State untuk kontrol scroll
+    val scrollState    = rememberScrollState()
+
+    fun mapStatus(raw: String): TransactionStatus = when (raw.lowercase()) {
+        "success"    -> TransactionStatus.SUCCESS
+        "pending"    -> TransactionStatus.PENDING
+        "processing" -> TransactionStatus.PROCESSING
+        else         -> TransactionStatus.FAILED
+    }
 
     fun doSearch() {
         keyboardCtrl?.hide()
         val query = invoiceInput.trim()
         if (query.isBlank()) return
+
         hasSearched  = true
-        searchResult = transactions.find {
-            it.invoiceId.equals(query, ignoreCase = true)
+        notFound     = false
+        searchResult = null
+        isLoading    = true
+
+        coroutineScope.launch {
+            try {
+                val response = repository.getTransactionByInvoice(query)
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val trx = response.body()?.transaction
+                    if (trx != null) {
+                        searchResult = Transaction(
+                            invoiceId  = trx.invoice_id,
+                            gameTitle  = trx.game_name,
+                            gameId     = 0,
+                            playerId   = trx.player_id ?: "-",
+                            item       = trx.amount,
+                            payment    = trx.payment_method ?: "-",
+                            totalPrice = trx.price,
+                            status     = mapStatus(trx.status)
+                        )
+                    } else {
+                        notFound = true
+                    }
+                } else {
+                    notFound = true
+                }
+            } catch (e: Exception) {
+                notFound = true
+            } finally {
+                isLoading = false
+            }
         }
-        notFound = searchResult == null
     }
 
     fun formatRp(v: Int) = "Rp ${"%,d".format(v).replace(',', '.')}"
@@ -65,14 +118,25 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
+        },
+        bottomBar = {
+            BottomNavBar(current = BottomNavDestination.CEK_TRANSAKSI) { dest ->
+                when (dest) {
+                    BottomNavDestination.GAME          -> onNavigateToGame()
+                    BottomNavDestination.CEK_TRANSAKSI -> { }
+                    BottomNavDestination.NEXUS_COIN    -> onNavigateToNexusCoin()
+                    BottomNavDestination.DASHBOARD     -> onNavigateToDashboard()
+                }
+            }
         }
     ) { innerPadding ->
+        // Mengubah Column utama agar mendukung vertikal scroll penuh
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(scrollState)
         ) {
-            // ── Banner Atas (gelap seperti gambar) ────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,7 +169,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ── Card Input ────────────────────────────────────────
                     Card(
                         shape  = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
@@ -124,7 +187,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                 fontSize   = 13.sp
                             )
 
-                            // Input Invoice
                             OutlinedTextField(
                                 value         = invoiceInput,
                                 onValueChange = {
@@ -141,7 +203,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                     )
                                 },
                                 trailingIcon = {
-                                    // Tombol paste dari clipboard
                                     IconButton(onClick = {
                                         val text = clipboardManager.getText()?.text ?: ""
                                         if (text.isNotBlank()) invoiceInput = text
@@ -170,7 +231,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                 )
                             )
 
-                            // Tombol Cari Invoice
                             Button(
                                 onClick  = { doSearch() },
                                 modifier = Modifier
@@ -180,34 +240,40 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFFFF6B00)
                                 ),
-                                enabled = invoiceInput.isNotBlank()
+                                enabled = invoiceInput.isNotBlank() && !isLoading
                             ) {
-                                Icon(
-                                    Icons.Rounded.Receipt, null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "Cari Invoice",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize   = 15.sp,
-                                    color      = Color.White
-                                )
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Rounded.Receipt, null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Cari Invoice",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize   = 15.sp,
+                                        color      = Color.White
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // ── Hasil Pencarian ───────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Tidak ditemukan
-                if (hasSearched && notFound) {
+                if (hasSearched && notFound && !isLoading) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape    = RoundedCornerShape(16.dp),
@@ -241,7 +307,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                     }
                 }
 
-                // Ditemukan — tampilkan detail transaksi
                 if (searchResult != null) {
                     val tx = searchResult!!
                     Text(
@@ -261,7 +326,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                             modifier            = Modifier.padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Status badge di atas
                             Row(
                                 modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -272,7 +336,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                     fontWeight = FontWeight.Bold,
                                     style      = MaterialTheme.typography.bodyMedium
                                 )
-                                // Badge status
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
                                     color = when (tx.status) {
@@ -312,7 +375,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                 color = MaterialTheme.colorScheme.outlineVariant
                             )
 
-                            // Total
                             Row(
                                 modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -332,7 +394,6 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                         }
                     }
 
-                    // Panduan: transaksi anda bisa ditemukan di riwayat
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape    = RoundedCornerShape(12.dp),
@@ -349,19 +410,37 @@ fun CekTransaksiScreen(appViewModel: AppViewModel) {
                                 tint     = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp))
                             Text(
-                                "Transaksi ini juga tersimpan di riwayat pada halaman Dashboard kamu.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                "Seluruh Data Transaksi disimpan dengan aman",
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.weight(1f)
                             )
                         }
+                    }
+
+                    // Tombol Nexus Coin
+                    Button(
+                        onClick  = { onNavigateToNexusCoin() },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape    = RoundedCornerShape(10.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1A1A2E)
+                        )
+                    ) {
+                        Icon(Icons.Rounded.MonetizationOn, null,
+                            modifier = Modifier.size(18.dp), tint = Color(0xFFFFD700))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Top Up dengan NEXUS Coin",
+                            fontWeight = FontWeight.Bold,
+                            color      = Color(0xFFFFD700)
+                        )
                     }
                 }
             }
         }
     }
 }
-
-// ── Helper ────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun TxInvoiceRow(label: String, value: String) {

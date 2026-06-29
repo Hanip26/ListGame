@@ -2,9 +2,11 @@ package com.example.listgame.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.*
@@ -50,7 +52,6 @@ fun LoginScreen(
     }
 
     // ── Snackbar: pesan sukses setelah register ───────────────────────────────
-    // Dibaca dari state (bukan event) agar tidak hilang saat recompose
     val regMsg = state.registerSuccessMessage
     LaunchedEffect(regMsg) {
         if (!regMsg.isNullOrBlank()) {
@@ -66,16 +67,22 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                // UX PRO: Tambahkan scroll dan imePadding agar tidak tertutup keyboard
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            // Spacer top agar konten tetap di tengah meskipun ada scroll
+            Spacer(modifier = Modifier.height(48.dp))
+
             // ── Logo ──────────────────────────────────────────────────────
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(32.dp))
+                    .size(100.dp) // Sedikit dikecilkan agar proporsional di layar kecil
+                    .clip(RoundedCornerShape(28.dp))
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
@@ -88,8 +95,8 @@ fun LoginScreen(
             ) {
                 Icon(
                     imageVector        = Icons.Rounded.VideogameAsset,
-                    contentDescription = "Logo",
-                    modifier           = Modifier.size(72.dp),
+                    contentDescription = "Logo Nexus",
+                    modifier           = Modifier.size(56.dp),
                     tint               = MaterialTheme.colorScheme.primary
                 )
             }
@@ -102,15 +109,41 @@ fun LoginScreen(
                 fontWeight = FontWeight.ExtraBold,
                 color      = MaterialTheme.colorScheme.primary
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
-                text      = "Masuk ke akunmu",
+                text      = "Selamat datang kembali! Masuk untuk melanjutkan.",
                 style     = MaterialTheme.typography.bodyMedium,
                 color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(32.dp))
+
+            // ── Error Banner (Tampil jika ada error general) ──────────────
+            if (state.errorMessage != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Rounded.ErrorOutline,
+                            contentDescription = "Error",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = state.errorMessage!!,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
 
             // ── Field Username / Email ────────────────────────────────────
             OutlinedTextField(
@@ -118,9 +151,10 @@ fun LoginScreen(
                 onValueChange = viewModel::onLoginUsernameChange,
                 label         = { Text("Email") },
                 leadingIcon   = {
-                    Icon(Icons.Rounded.Person, null,
+                    Icon(Icons.Rounded.Person, contentDescription = "Email Icon",
                         tint = MaterialTheme.colorScheme.primary)
                 },
+                enabled         = !state.isLoading, // UX PRO: Kunci input saat loading
                 isError         = state.errorMessage != null,
                 modifier        = Modifier.fillMaxWidth(),
                 singleLine      = true,
@@ -134,7 +168,7 @@ fun LoginScreen(
                 )
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
             // ── Field Password ────────────────────────────────────────────
             OutlinedTextField(
@@ -142,29 +176,25 @@ fun LoginScreen(
                 onValueChange = viewModel::onLoginPasswordChange,
                 label         = { Text("Password") },
                 leadingIcon   = {
-                    Icon(Icons.Rounded.Lock, null,
+                    Icon(Icons.Rounded.Lock, contentDescription = "Password Icon",
                         tint = MaterialTheme.colorScheme.primary)
                 },
                 trailingIcon  = {
-                    IconButton(onClick = viewModel::onLoginPasswordVisibilityToggle) {
+                    IconButton(
+                        onClick = viewModel::onLoginPasswordVisibilityToggle,
+                        enabled = !state.isLoading
+                    ) {
                         Icon(
                             imageVector = if (state.isPasswordVisible)
                                 Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                            contentDescription = "Toggle password"
+                            contentDescription = if (state.isPasswordVisible) "Sembunyikan password" else "Tampilkan password"
                         )
                     }
                 },
                 visualTransformation = if (state.isPasswordVisible)
                     VisualTransformation.None else PasswordVisualTransformation(),
+                enabled         = !state.isLoading, // UX PRO: Kunci input saat loading
                 isError         = state.errorMessage != null,
-                supportingText  = {
-                    if (state.errorMessage != null) {
-                        Text(
-                            state.errorMessage!!,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
                 modifier        = Modifier.fillMaxWidth(),
                 singleLine      = true,
                 shape           = RoundedCornerShape(16.dp),
@@ -174,18 +204,21 @@ fun LoginScreen(
                 ),
                 keyboardActions = KeyboardActions(onDone = {
                     keyboardCtrl?.hide()
+                    focusManager.clearFocus()
                     viewModel.submitLogin()
                 })
             )
 
-            Spacer(Modifier.height(28.dp))
-
-            // ── Lupa Password — letakkan setelah OutlinedTextField password ──────────────
+            // ── Lupa Password (Didekatkan ke field password) ──────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onNavigateToForgotPassword) {
+                TextButton(
+                    onClick = onNavigateToForgotPassword,
+                    enabled = !state.isLoading,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
                     Text(
                         "Lupa Password?",
                         fontWeight = FontWeight.SemiBold,
@@ -195,35 +228,36 @@ fun LoginScreen(
                 }
             }
 
-// Spacer yang sudah ada tetap
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
 
             // ── Tombol Login ──────────────────────────────────────────────
             Button(
                 onClick  = {
                     keyboardCtrl?.hide()
+                    focusManager.clearFocus()
                     viewModel.submitLogin()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape   = RoundedCornerShape(16.dp),
-                enabled = !state.isLoading
+                enabled = !state.isLoading && state.usernameOrEmail.isNotBlank() && state.password.isNotBlank()
+                // UX PRO: Tombol otomatis disable jika field masih kosong
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(24.dp),
                         strokeWidth = 2.5.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Warna menyesuaikan disabled state
                     )
                 } else {
                     Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(8.dp))
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Masuk")
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(32.dp))
 
             // ── Link ke Register ──────────────────────────────────────────
             Row(
@@ -235,7 +269,10 @@ fun LoginScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onNavigateToRegister) {
+                TextButton(
+                    onClick = onNavigateToRegister,
+                    enabled = !state.isLoading
+                ) {
                     Text(
                         "Daftar sekarang",
                         fontWeight = FontWeight.Bold,
@@ -243,6 +280,9 @@ fun LoginScreen(
                     )
                 }
             }
+
+            // Spacer bottom agar layout bisa di scroll sampai habis dengan lega
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -1,5 +1,11 @@
 package com.example.listgame.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,14 +19,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.listgame.navigation.LocalBackStack
@@ -37,6 +43,9 @@ fun KalkulatorWinRateScreen() {
     var result         by remember { mutableStateOf<WinRateResult?>(null) }
     var errorMsg       by remember { mutableStateOf("") }
 
+    // Mempertahankan brand color oranye dari kodemu sebelumnya
+    val brandOrange = Color(0xFFFF6B00)
+
     fun calculate() {
         errorMsg = ""
         result   = null
@@ -51,11 +60,11 @@ fun KalkulatorWinRateScreen() {
                 return
             }
             wr == null || wr < 0 || wr > 100 -> {
-                errorMsg = "Win rate saat ini harus 0–100."
+                errorMsg = "Win rate saat ini harus 0–100%."
                 return
             }
             tr == null || tr < 0 || tr > 100 -> {
-                errorMsg = "Target win rate harus 0–100."
+                errorMsg = "Target win rate harus 0–100%."
                 return
             }
             tr <= wr -> {
@@ -68,7 +77,7 @@ fun KalkulatorWinRateScreen() {
         val target = tr!!
 
         if (target >= 100.0) {
-            errorMsg = "Target 100% tidak dapat dicapai jika ada kekalahan."
+            errorMsg = "Target 100% tidak realistis jika ada kekalahan."
             return
         }
 
@@ -91,7 +100,8 @@ fun KalkulatorWinRateScreen() {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }
@@ -102,256 +112,222 @@ fun KalkulatorWinRateScreen() {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ── Banner Atas Gelap ─────────────────────────────────────────
+            // ── Premium Header Banner ─────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color(0xFF1A1A1A), Color(0xFF252525))
+                            colors = listOf(Color(0xFF1E1E1E), Color(0xFF2C2C2C))
                         )
                     )
-                    .padding(horizontal = 24.dp, vertical = 36.dp),
+                    .padding(horizontal = 24.dp, vertical = 40.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Insights,
+                        contentDescription = null,
+                        tint = brandOrange,
+                        modifier = Modifier.size(48.dp)
+                    )
                     Text(
-                        "Kalkulator Win Rate",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize   = 26.sp,
+                        "Kalkulator Winrate",
+                        fontWeight = FontWeight.Black,
+                        fontSize   = 24.sp,
                         color      = Color.White,
                         textAlign  = TextAlign.Center
                     )
                     Text(
-                        "Digunakan untuk menghitung total jumlah pertandingan " +
-                                "yang harus diambil untuk mencapai target tingkat " +
-                                "kemenangan yang diinginkan.",
-                        style     = MaterialTheme.typography.bodySmall,
-                        color     = Color.White.copy(alpha = 0.65f),
+                        "Ketahui berapa banyak kemenangan beruntun yang kamu butuhkan untuk mencapai win rate impianmu.",
+                        style     = MaterialTheme.typography.bodyMedium,
+                        color     = Color.White.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,
-                        modifier  = Modifier.padding(horizontal = 8.dp)
+                        lineHeight = 20.sp,
+                        modifier  = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             }
 
-            // ── Form Input ────────────────────────────────────────────────
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Form Input Section ──────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
 
-                // Input 1
                 WinRateInputField(
-                    label         = "Total Pertandingan Kamu Saat Ini",
+                    label         = "Total Pertandingan Saat Ini",
                     value         = totalMatch,
-                    onValueChange = {
-                        totalMatch = it
-                        result     = null
-                        errorMsg   = ""
-                    },
-                    placeholder = "Pertandingan saat ini"
+                    onValueChange = { totalMatch = it; result = null; errorMsg = "" },
+                    placeholder   = "Contoh: 150",
+                    icon          = Icons.Rounded.SportsEsports,
+                    brandColor    = brandOrange
                 )
 
-                // Input 2
                 WinRateInputField(
-                    label         = "Total Win Rate Kamu Saat Ini",
+                    label         = "Win Rate Saat Ini (%)",
                     value         = currentWinRate,
-                    onValueChange = {
-                        currentWinRate = it
-                        result         = null
-                        errorMsg       = ""
-                    },
-                    placeholder = "Menang yang ingin dicapai"
+                    onValueChange = { currentWinRate = it; result = null; errorMsg = "" },
+                    placeholder   = "Contoh: 45.5",
+                    icon          = Icons.Rounded.DataUsage,
+                    brandColor    = brandOrange
                 )
 
-                // Input 3
                 WinRateInputField(
-                    label         = "Win Rate Total yang Kamu Inginkan",
+                    label         = "Target Win Rate (%)",
                     value         = targetWinRate,
-                    onValueChange = {
-                        targetWinRate = it
-                        result        = null
-                        errorMsg      = ""
-                    },
-                    placeholder = "Winrate"
+                    onValueChange = { targetWinRate = it; result = null; errorMsg = "" },
+                    placeholder   = "Contoh: 60",
+                    icon          = Icons.Rounded.EmojiEvents,
+                    brandColor    = brandOrange
                 )
 
-                // ── Pesan error ───────────────────────────────────────────
-                if (errorMsg.isNotEmpty()) {
-                    Card(
-                        shape  = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                // ── Animated Error Banner ─────────────────────────────────────
+                AnimatedVisibility(
+                    visible = errorMsg.isNotEmpty(),
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier              = Modifier.padding(12.dp),
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                Icons.Rounded.Warning, null,
-                                tint     = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Icon(Icons.Rounded.WarningAmber, null, tint = MaterialTheme.colorScheme.error)
                             Text(
                                 errorMsg,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
 
-                // ✅ Tombol Hitung — tengah layar, tanpa Pesan Joki
+                // ── Action Button ─────────────────────────────────────────────
                 Button(
                     onClick  = { calculate() },
                     modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .fillMaxWidth(0.6f)   // lebar 60% layar agar terkesan terpusat
-                        .height(52.dp),
-                    shape  = RoundedCornerShape(12.dp),
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .shadow(if (totalMatch.isNotBlank()) 8.dp else 0.dp, RoundedCornerShape(16.dp), spotColor = brandOrange),
+                    shape  = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor         = Color(0xFFFF6B00),
-                        disabledContainerColor = Color(0xFFFF6B00).copy(alpha = 0.4f)
+                        containerColor         = brandOrange,
+                        disabledContainerColor = brandOrange.copy(alpha = 0.3f)
                     ),
-                    enabled = totalMatch.isNotBlank() &&
-                            currentWinRate.isNotBlank() &&
-                            targetWinRate.isNotBlank()
+                    enabled = totalMatch.isNotBlank() && currentWinRate.isNotBlank() && targetWinRate.isNotBlank()
                 ) {
-                    Icon(
-                        Icons.Rounded.Calculate, null,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Icon(Icons.Rounded.AutoGraph, null, modifier = Modifier.size(22.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Hitung",
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 16.sp
-                    )
+                    Text("Kalkulasi Sekarang", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
 
-                // ── Hasil Kalkulasi ───────────────────────────────────────
-                if (result != null) {
-                    val r = result!!
+                // ── Animated Result Section ───────────────────────────────────
+                AnimatedVisibility(
+                    visible = result != null,
+                    enter = fadeIn(tween(500)) + expandVertically(tween(500)),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    if (result != null) {
+                        val r = result!!
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
-                    // Kotak hasil utama
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(vertical = 20.dp, horizontal = 20.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(
-                                    SpanStyle(
-                                        color      = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize   = 14.sp
+                            // Hero Statistic Card
+                            Surface(
+                                color = brandOrange.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(20.dp),
+                                border = null,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "KAMU MEMBUTUHKAN",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = brandOrange,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
                                     )
-                                ) { append("YOU NEED ABOUT ") }
-
-                                withStyle(
-                                    SpanStyle(
-                                        color      = Color(0xFFFF6B00),
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize   = 14.sp
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.Bottom) {
+                                        Text(
+                                            text = "${r.gamesNeeded}",
+                                            fontSize = 48.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = " WIN",
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(bottom = 6.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "tanpa kalah untuk mencapai win rate ${r.targetWr}%.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
                                     )
-                                ) { append("${r.gamesNeeded} WIN WITHOUT LOSE") }
+                                }
+                            }
 
-                                withStyle(
-                                    SpanStyle(
-                                        color      = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize   = 14.sp
-                                    )
-                                ) { append(" TO GET A ") }
-
-                                withStyle(
-                                    SpanStyle(
-                                        color      = Color(0xFFFF6B00),
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize   = 14.sp
-                                    )
-                                ) { append("${r.targetWr}% WIN RATE") }
-
-                                withStyle(
-                                    SpanStyle(
-                                        color      = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize   = 14.sp
-                                    )
-                                ) { append(".") }
-                            },
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Rincian kalkulasi
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape    = RoundedCornerShape(12.dp),
-                        colors   = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    ) {
-                        Column(
-                            modifier            = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                "Ringkasan Kalkulasi",
-                                fontWeight = FontWeight.Bold,
-                                style      = MaterialTheme.typography.labelLarge,
-                                color      = MaterialTheme.colorScheme.primary
-                            )
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                            WrDetailRow(
-                                "Pertandingan saat ini",
-                                totalMatch
-                            )
-                            WrDetailRow(
-                                "Win rate saat ini",
-                                "$currentWinRate%"
-                            )
-                            WrDetailRow(
-                                "Target win rate",
-                                "$targetWinRate%"
-                            )
-                            WrDetailRow(
-                                "Kemenangan beruntun dibutuhkan",
-                                "${r.gamesNeeded}"
-                            )
-                            WrDetailRow(
-                                "Total pertandingan setelah itu",
-                                "${r.totalAfter}"
-                            )
+                            // Detail Breakdown Card
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape    = RoundedCornerShape(16.dp),
+                                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(20.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Rounded.Analytics, null, tint = brandOrange, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Ringkasan Statistik",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                    WrDetailRow("Pertandingan saat ini", totalMatch)
+                                    WrDetailRow("Win rate saat ini", "$currentWinRate%")
+                                    WrDetailRow("Target win rate", "$targetWinRate%")
+                                    WrDetailRow("Total pertandingan nanti", "${r.totalAfter}")
+                                }
+                            }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
 
 // ── Data class hasil kalkulasi ────────────────────────────────────────────────
-
 private data class WinRateResult(
     val gamesNeeded : Int,
     val targetWr    : Int,
@@ -359,63 +335,60 @@ private data class WinRateResult(
     val totalAfter  : Int
 )
 
-// ── Helper: Input Field ───────────────────────────────────────────────────────
-
+// ── Helper: Input Field Premium ───────────────────────────────────────────────
 @Composable
 private fun WinRateInputField(
     label        : String,
     value        : String,
     onValueChange: (String) -> Unit,
-    placeholder  : String
+    placeholder  : String,
+    icon         : ImageVector,
+    brandColor   : Color
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            label,
+            text = label,
             fontWeight = FontWeight.SemiBold,
-            style      = MaterialTheme.typography.bodyMedium,
-            color      = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface
         )
         OutlinedTextField(
             value         = value,
             onValueChange = onValueChange,
-            placeholder   = {
-                Text(placeholder,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            singleLine      = true,
-            modifier        = Modifier.fillMaxWidth(),
-            shape           = RoundedCornerShape(10.dp),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number
-            ),
+            placeholder   = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+            leadingIcon   = { Icon(icon, contentDescription = null, tint = brandColor) },
+            singleLine    = true,
+            modifier      = Modifier.fillMaxWidth(),
+            shape         = RoundedCornerShape(16.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFFFF6B00)
+                focusedBorderColor = brandColor,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             )
         )
     }
 }
 
 // ── Helper: Baris Detail ──────────────────────────────────────────────────────
-
 @Composable
 private fun WrDetailRow(label: String, value: String) {
     Row(
-        modifier              = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            label,
-            style    = MaterialTheme.typography.bodySmall,
-            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1.5f)
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            value,
-            style      = MaterialTheme.typography.bodySmall,
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color      = MaterialTheme.colorScheme.onSurface,
-            textAlign  = TextAlign.End,
-            modifier   = Modifier.weight(1f)
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

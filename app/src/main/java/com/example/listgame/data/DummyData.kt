@@ -45,7 +45,7 @@ object DummyData {
             )
         ),
         Game(
-            id = 3,
+            id = 4,
             title = "Genshin Impact",
             developer = "HoYoverse",
             description = "Genshin Impact adalah game Action RPG Open-World yang menawarkan dunia fantasi luas bernama Teyvat...",
@@ -64,7 +64,7 @@ object DummyData {
             )
         ),
         Game(
-            id = 4,
+            id = 3,
             title = "PUBG Mobile",
             developer = "Level Infinite",
             description = "PlayerUnknown's Battlegrounds (PUBG) Mobile menghadirkan pengalaman Battle Royale klasik yang realistis...",

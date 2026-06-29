@@ -35,6 +35,7 @@ import com.example.listgame.model.TopUpOption
 import com.example.listgame.navigation.LocalBackStack
 import com.example.listgame.navigation.Route
 import com.example.listgame.viewmodel.AppViewModel
+import com.example.listgame.model.PackageViewModel
 
 // ── Data Classes ──────────────────────────────────────────────────────────────
 
@@ -65,7 +66,13 @@ val validPromoCodes = mapOf(
 fun TopUpScreen(gameId: Int, appViewModel: AppViewModel) {
     val backStack = LocalBackStack.current
     val game      = DummyData.popularGames.find { it.id == gameId }
-
+    val packageViewModel = remember {
+        PackageViewModel()
+    }
+    LaunchedEffect(gameId) {
+        packageViewModel.loadPackages(gameId)
+    }
+    val packages by packageViewModel.packages.collectAsState()
     // ── Saldo Nexus Coin (sinkron dengan halaman NEXUS Coins) ─────────────────
     val nexusCoinBalance by appViewModel.nexusCoinBalance.collectAsState()
 
@@ -395,7 +402,7 @@ fun TopUpScreen(gameId: Int, appViewModel: AppViewModel) {
 
             // ── STEP 2: Pilih Nominal ─────────────────────────────────────
             StepCard(2, "Pilih Nominal") {
-                if (game?.topUpOptions.isNullOrEmpty()) {
+                if (packages.isEmpty()) {
                     Text(
                         "Top up tidak tersedia untuk game ini.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -409,11 +416,19 @@ fun TopUpScreen(gameId: Int, appViewModel: AppViewModel) {
                             .fillMaxWidth()
                             .heightIn(max = 600.dp)
                     ) {
-                        items(game!!.topUpOptions) { option ->
+                        items(packages) { pkg ->
+                            val option = TopUpOption(
+                                amount = pkg.amount,
+                                price = "Rp ${pkg.price}",
+                                bonus = pkg.bonus ?: ""
+                            )
+
                             TopUpOptionCard(
-                                option     = option,
-                                isSelected = selectedOption == option,
-                                onClick    = { selectedOption = option }
+                                option = option,
+                                isSelected = selectedOption?.amount == option.amount,
+                                onClick = {
+                                    selectedOption = option
+                                }
                             )
                         }
                     }

@@ -140,7 +140,7 @@ fun ForgotPasswordScreen(
                                     style      = MaterialTheme.typography.headlineSmall
                                 )
                                 Text(
-                                    "Masukkan username atau email yang terdaftar pada akunmu.",
+                                    "Masukkan email yang terdaftar pada akunmu.",
                                     style     = MaterialTheme.typography.bodyMedium,
                                     color     = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -153,8 +153,8 @@ fun ForgotPasswordScreen(
                             OutlinedTextField(
                                 value         = state.usernameOrEmail,
                                 onValueChange = viewModel::onForgotIdentityChange,
-                                label         = { Text("Username atau Email") },
-                                placeholder   = { Text("contoh: gamer123 atau user@email.com") },
+                                label         = { Text("Email") },
+                                placeholder   = { Text("contoh: user@email.com") },
                                 leadingIcon   = {
                                     Icon(
                                         Icons.Rounded.PersonSearch, null,
@@ -230,8 +230,8 @@ fun ForgotPasswordScreen(
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Text(
-                                        "Pastikan kamu memasukkan username atau email yang " +
-                                                "sama persis dengan yang digunakan saat mendaftar.",
+                                        "Pastikan kamu memasukkan email yang " +
+                                                "sama dengan yang digunakan saat mendaftar.",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
